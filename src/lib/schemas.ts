@@ -31,3 +31,13 @@ export const tagInput = z.object({
   deviceId: z.string().min(1),
   on: z.boolean(),
 })
+
+export const ballotInput = z.object({
+  deviceId: z.string().min(1),
+  picks: z
+    .array(z.uuid())
+    .length(3)
+    .refine((p) => new Set(p).size === p.length, { message: 'Picks must be distinct' }),
+})
+
+export const ballotMineInput = z.object({ deviceId: z.string().min(1) })

@@ -201,6 +201,9 @@ isOneToOne: false
 "set_tag":
 { Args: { "p_chili_id": string,"p_device_id": string,"p_on": boolean,"p_tag_id": string }; Returns: undefined
                            },
+"submit_ballot":
+{ Args: { "p_device_id": string,"p_first": string,"p_second": string,"p_third": string }; Returns: undefined
+                           },
 "voting_open":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            }
