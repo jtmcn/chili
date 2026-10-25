@@ -45,3 +45,12 @@ describe('postJson', () => {
     expect(f).toHaveBeenCalledTimes(4)
   })
 })
+
+describe('postJson non-JSON bodies', () => {
+  it('does not retry a 4xx with a non-JSON body', async () => {
+    const f = vi.fn().mockResolvedValue(new Response('<html>', { status: 413 }))
+    vi.stubGlobal('fetch', f)
+    expect(await postJson('/x', {}, { delayMs: 0 })).toEqual({ ok: false, error: 'server_error', message: 'Something went wrong. Try again.' })
+    expect(f).toHaveBeenCalledTimes(1)
+  })
+})

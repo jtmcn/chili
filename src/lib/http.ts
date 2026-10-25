@@ -28,7 +28,7 @@ const RAISED: Record<string, number> = {
 }
 
 export function fromDbError(e: PostgrestError): Response {
-  if (e.message in RAISED) return fail(e.message, RAISED[e.message])
+  if (Object.hasOwn(RAISED, e.message)) return fail(e.message, RAISED[e.message])
   if (e.code === '23505') {
     const pot = `${e.message} ${e.details ?? ''}`.includes('pot_number')
     return fail(pot ? 'pot_taken' : 'name_taken', 409)

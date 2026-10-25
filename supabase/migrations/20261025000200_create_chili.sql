@@ -2,8 +2,8 @@ create function public.entries_ok()
 returns boolean
 language sql stable security definer set search_path = ''
 as $$
-  select coalesce(e.entries_open and (e.reveal_at is null or now() < e.reveal_at), false)
-  from public.event e where e.id = 1;
+  select coalesce((select e.entries_open and (e.reveal_at is null or now() < e.reveal_at)
+    from public.event e where e.id = 1), false);
 $$;
 
 create function public.create_chili(
@@ -16,12 +16,19 @@ declare
   v_id uuid;
   v_pot int;
 begin
+  -- serialize per device so the limit and replay check can't be raced
+  perform pg_advisory_xact_lock(hashtext('create_chili:' || p_device_id));
+  -- idempotent replay of a retried request
+  select pot_number into v_pot from public.chilis
+  where owner_device_id = p_device_id and lower(name) = lower(p_name);
+  if found then
+    return v_pot;
+  end if;
+
   if not p_as_admin then
     if not public.entries_ok() then
       raise exception 'entries_closed';
     end if;
-    -- serialize per device so the limit can't be raced
-    perform pg_advisory_xact_lock(hashtext('create_chili:' || p_device_id));
     if (select count(*) from public.chilis where owner_device_id = p_device_id) >= 3 then
       raise exception 'device_limit';
     end if;
@@ -32,7 +39,7 @@ begin
   returning id, pot_number into v_id, v_pot;
 
   insert into public.chili_allergens (chili_id, allergen_id)
-  select v_id, a from unnest(p_allergens) as a;
+  select distinct v_id, a from unnest(p_allergens) as a;
 
   return v_pot;
 end;
