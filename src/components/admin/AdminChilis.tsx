@@ -74,9 +74,12 @@ export function AdminChilis({
   const [draft, setDraft] = useState<Draft>(blank)
   const [adding, setAdding] = useState<Draft>(blank)
   const [msg, setMsg] = useState('')
+  const [pending, setPending] = useState(false)
 
   async function run(body: Record<string, unknown>) {
+    setPending(true)
     const res = await post('/api/admin/chili', body)
+    setPending(false)
     setMsg(res.ok ? '' : res.message)
     if (res.ok) onChange()
     return res.ok
@@ -108,7 +111,7 @@ export function AdminChilis({
               >
                 <Fields d={draft} set={setDraft} allergens={allergens} />
                 <div className="mt-2 flex gap-2">
-                  <button type="submit" className="min-h-12 rounded bg-enamel px-4 font-semibold text-plate">
+                  <button type="submit" disabled={pending} className="min-h-12 rounded bg-enamel px-4 font-semibold text-plate disabled:opacity-60">
                     Save
                   </button>
                   <button type="button" className="min-h-12 px-4" onClick={() => setEditing(null)}>
@@ -142,7 +145,8 @@ export function AdminChilis({
                     </button>
                     <button
                       type="button"
-                      className="min-h-12 rounded border border-chili px-4 text-chili"
+                      disabled={pending}
+                      className="min-h-12 rounded border border-chili px-4 text-chili disabled:opacity-60"
                       onClick={() => confirm(`Delete ${c.name}?`) && run({ action: 'delete', chiliId: c.id })}
                     >
                       Delete
@@ -163,7 +167,7 @@ export function AdminChilis({
       >
         <h3 className="text-[22px] font-semibold">Add a chili</h3>
         <Fields d={adding} set={setAdding} allergens={allergens} />
-        <button type="submit" className="mt-3 min-h-12 rounded bg-enamel px-6 font-semibold text-plate">
+        <button type="submit" disabled={pending} className="mt-3 min-h-12 rounded bg-enamel px-6 font-semibold text-plate disabled:opacity-60">
           Add chili
         </button>
       </form>

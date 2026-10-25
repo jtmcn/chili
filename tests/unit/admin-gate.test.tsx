@@ -32,6 +32,14 @@ describe('AdminGate', () => {
     expect(post).toHaveBeenCalledWith('/api/admin/state', {}, { headers: { 'x-admin-passcode': 'nope' } })
   })
 
+  it('clears a stale saved passcode on 401', async () => {
+    sessionStorage.setItem('chili.adminPasscode', 'old')
+    post.mockResolvedValue({ ok: false, error: 'unauthorized', message: 'Wrong passcode.' })
+    render(<AdminGate>secret</AdminGate>)
+    expect(await screen.findByText('Wrong passcode.')).toBeInTheDocument()
+    expect(sessionStorage.getItem('chili.adminPasscode')).toBeNull()
+  })
+
   it('stores the passcode and renders children on 200', async () => {
     post.mockResolvedValue({ ok: true })
     render(<AdminGate>secret</AdminGate>)

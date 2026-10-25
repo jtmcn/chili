@@ -34,6 +34,9 @@ export function AdminGate({ children }: { children: ReactNode }) {
     const res = await postJson('/api/admin/state', {}, { headers: { 'x-admin-passcode': code } })
     setPending(false)
     if (!res.ok) {
+      try {
+        sessionStorage.removeItem(KEY)
+      } catch {}
       setError(res.message)
       return
     }

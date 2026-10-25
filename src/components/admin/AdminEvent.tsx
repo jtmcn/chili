@@ -41,7 +41,7 @@ export function AdminEvent({ event, onChange }: { event: EventState; onChange: (
           className={`${btn} ${event.entriesOpen ? on : ''}`}
           onClick={() => send({ entriesOpen: !event.entriesOpen })}
         >
-          {event.entriesOpen ? 'Open' : 'Closed'}
+          {event.entriesOpen ? 'Close entries' : 'Open entries'}
         </button>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -61,7 +61,7 @@ export function AdminEvent({ event, onChange }: { event: EventState; onChange: (
       </div>
       {event.status === 'voting' && !event.revealAt && (
         <p role="alert" className="mt-2">
-          Voting has no reveal time. Results won&apos;t show until you set one or reveal now.
+          Voting has no reveal time, so tasters can&apos;t vote yet. Set a reveal time.
         </p>
       )}
       <div className="mt-4">

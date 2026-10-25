@@ -44,5 +44,6 @@ body {
   .qr-img {
     width: 14cm;
     height: 14cm;
+    max-width: none;
   }
 }

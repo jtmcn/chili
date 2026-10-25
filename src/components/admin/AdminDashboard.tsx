@@ -17,7 +17,7 @@ interface State {
 
 export function AdminDashboard() {
   const post = useAdminPost()
-  const { data, refresh } = useLive(['ballots', 'chilis', 'event'], async () => {
+  const { data, error, refresh } = useLive(['ballots', 'chilis', 'event'], async () => {
     const res = await post<State>('/api/admin/state', {})
     if (!res.ok) throw new Error(res.message)
     return res
@@ -31,10 +31,16 @@ export function AdminDashboard() {
     setOrigin(window.location.origin)
   }, [])
 
-  if (!data) return <p className="p-4">Loading…</p>
+  if (!data) {
+    return (
+      <p role={error ? 'alert' : undefined} className="p-4">
+        {error instanceof Error ? error.message : error ? 'Could not load admin data.' : 'Loading…'}
+      </p>
+    )
+  }
   const url = process.env.NEXT_PUBLIC_APP_URL || origin
   return (
-    <main className="mx-auto max-w-md p-4">
+    <main className="mx-auto max-w-md p-4 print:max-w-none print:p-0">
       <h1 className="event-name text-[28px] font-semibold">{data.event.name}</h1>
       <p className="print:hidden">{data.ballotCount} ballots in</p>
       <div className="print:hidden">
