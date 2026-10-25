@@ -38,18 +38,21 @@ export function Ballot() {
   }
 
   useEffect(() => {
-    const pending = loadPending()
-    if (pending) {
-      void Promise.resolve().then(() => setPicks(pending))
-      void submit(pending)
-      return
-    }
-    postJson<{ picks: Picks | null }>('/api/ballot/mine', { deviceId: getDeviceId() }).then((r) => {
+    // deferred so the setState calls aren't synchronous in the effect body
+    void (async () => {
+      await Promise.resolve()
+      const pending = loadPending()
+      if (pending) {
+        setPicks(pending)
+        await submit(pending)
+        return
+      }
+      const r = await postJson<{ picks: Picks | null }>('/api/ballot/mine', { deviceId: getDeviceId() })
       if (r.ok && r.picks) {
         setPicks(r.picks)
         setHasBallot(true)
       }
-    })
+    })()
   }, [])
 
   async function save() {
