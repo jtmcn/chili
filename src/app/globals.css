@@ -28,3 +28,21 @@ body {
     transition: none !important;
   }
 }
+
+@keyframes ribbon-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+
+.ribbon-drop {
+  animation: ribbon-drop 300ms ease-out backwards;
+}
+
+@media print {
+  .qr-img {
+    width: 14cm;
+    height: 14cm;
+  }
+}

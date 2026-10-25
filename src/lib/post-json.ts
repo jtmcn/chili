@@ -8,15 +8,15 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 export async function postJson<T>(
   url: string,
   body: unknown,
-  opts: { retries?: number; delayMs?: number } = {},
+  opts: { retries?: number; delayMs?: number; headers?: Record<string, string> } = {},
 ): Promise<ApiResult<T>> {
-  const { retries = 3, delayMs = 500 } = opts
+  const { retries = 3, delayMs = 500, headers } = opts
   for (let attempt = 0; attempt <= retries; attempt++) {
     if (attempt > 0) await sleep(delayMs * attempt)
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...headers },
         body: JSON.stringify(body),
       })
       if (res.status >= 500 && attempt < retries) continue
