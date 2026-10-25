@@ -19,3 +19,15 @@ export const chiliInput = z
   })
 
 export type ChiliInput = z.infer<typeof chiliInput>
+
+export const TAG_IDS = [
+  'spicy', 'mild', 'smoky', 'meaty', 'veggie',
+  'beany', 'sweet', 'tangy', 'rich', 'unique',
+] as const
+
+export const tagInput = z.object({
+  chiliId: z.uuid(),
+  tagId: z.enum(TAG_IDS),
+  deviceId: z.string().min(1),
+  on: z.boolean(),
+})

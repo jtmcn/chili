@@ -198,6 +198,9 @@ isOneToOne: false
               "chili_id": string,"count": number,"tag_id": string
             }[]
                            },
+"set_tag":
+{ Args: { "p_chili_id": string,"p_device_id": string,"p_on": boolean,"p_tag_id": string }; Returns: undefined
+                           },
 "voting_open":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            }
