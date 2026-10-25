@@ -12,6 +12,7 @@ type PhotoState =
   | { kind: 'idle' }
   | { kind: 'uploading' }
   | { kind: 'done'; url: string }
+  // blob kept only when a resend could succeed
   | { kind: 'error'; message: string; blob: Blob | null }
 
 export function Success({ potNumber, chiliId }: { potNumber: number; chiliId: string }) {
@@ -20,7 +21,7 @@ export function Success({ potNumber, chiliId }: { potNumber: number; chiliId: st
   async function send(blob: Blob) {
     setPhoto({ kind: 'uploading' })
     const r = await uploadPhoto({ deviceId: getDeviceId(), chiliId, file: blob })
-    setPhoto(r.ok ? { kind: 'done', url: r.photoUrl } : { kind: 'error', message: r.message, blob })
+    setPhoto(r.ok ? { kind: 'done', url: r.photoUrl } : { kind: 'error', message: r.message, blob: r.retry ? blob : null })
   }
 
   async function pick(file: File | undefined) {
@@ -56,7 +57,6 @@ export function Success({ potNumber, chiliId }: { potNumber: number; chiliId: st
             <input
               type="file"
               accept="image/*"
-              capture="environment"
               disabled={uploading}
               className="sr-only"
               onChange={(e) => {

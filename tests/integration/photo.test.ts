@@ -5,8 +5,12 @@ import { POST as ADMIN } from '@/app/api/admin/chili/route'
 import { call, db, resetDb } from './helpers'
 
 const H = { 'x-admin-passcode': 'test-passcode' }
-// Minimal JPEG magic bytes; the route only checks type and size.
-const jpeg = (size = 1024) => new Blob([new Uint8Array(size).fill(0xff)], { type: 'image/jpeg' })
+// SOI marker then filler; the route checks magic bytes, type and size.
+const jpeg = (size = 1024) => {
+  const b = new Uint8Array(size).fill(0xff)
+  b.set([0xff, 0xd8, 0xff])
+  return new Blob([b], { type: 'image/jpeg' })
+}
 
 async function upload(deviceId: string, chiliId: string, file: Blob) {
   const fd = new FormData()
@@ -45,6 +49,19 @@ describe('POST /api/chili/photo', () => {
   })
   it('rejects non-JPEG', async () => {
     const r = await upload('test-dev-1', chiliId, new Blob(['x'], { type: 'image/png' }))
+    expect(r.status).toBe(400)
+    expect(r.json.error).toBe('invalid')
+  })
+  it('rejects non-JPEG bytes labelled image/jpeg', async () => {
+    const r = await upload('test-dev-1', chiliId, new Blob(['GIF89a not a jpeg'], { type: 'image/jpeg' }))
+    expect(r.status).toBe(400)
+    expect(r.json.error).toBe('invalid')
+  })
+  it('rejects an empty file', async () => {
+    expect((await upload('test-dev-1', chiliId, new Blob([], { type: 'image/jpeg' }))).status).toBe(400)
+  })
+  it('unknown chili is 400 invalid', async () => {
+    const r = await upload('test-dev-1', crypto.randomUUID(), jpeg())
     expect(r.status).toBe(400)
     expect(r.json.error).toBe('invalid')
   })

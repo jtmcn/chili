@@ -160,7 +160,7 @@ export function AdminChilis({
                       <button
                         type="button"
                         disabled={pending}
-                        className="min-h-12 rounded border border-chili px-4 text-chili disabled:opacity-60"
+                        className="min-h-12 rounded border border-enamel px-4 disabled:opacity-60"
                         onClick={() => confirm(`Remove the photo from ${c.name}?`) && run({ action: 'removePhoto', chiliId: c.id })}
                       >
                         Remove photo

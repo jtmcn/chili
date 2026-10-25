@@ -22,7 +22,8 @@ export async function resizeToJpeg(file: File, max = 1024, quality = 0.8): Promi
 const FAILED = "Couldn't upload the photo. Try again."
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-export type UploadResult = { ok: true; photoUrl: string } | { ok: false; message: string }
+// retry: worth resending (network or 5xx); 4xx is final.
+export type UploadResult = { ok: true; photoUrl: string } | { ok: false; message: string; retry: boolean }
 
 // Multipart, so not postJson; same policy: retry thrown fetches and 5xx only.
 export async function uploadPhoto(
@@ -40,10 +41,10 @@ export async function uploadPhoto(
       if (res.status >= 500 && attempt < retries) continue
       const json = await res.json().catch(() => null)
       if (json?.ok) return { ok: true, photoUrl: json.photoUrl }
-      return { ok: false, message: json?.message ?? FAILED }
+      return { ok: false, message: json?.message ?? FAILED, retry: res.status >= 500 || !json }
     } catch {
       // fall through to retry
     }
   }
-  return { ok: false, message: FAILED }
+  return { ok: false, message: FAILED, retry: true }
 }
