@@ -40,7 +40,7 @@
 - Anon reads public chili and tag data only through `security definer` functions (`get_chilis()`, `get_tag_counts()`), not views. A view over RLS-hidden tables trips Supabase's `security_definer_view` lint.
 - After the first merge checkpoint, real cooks are using the prod database, which previews share. From then on, **never write from a preview**. Do manual testing against local Supabase only. Never change event state on prod outside the admin page on the event day.
 - Test rows use device IDs prefixed `test-` and chili names prefixed `TEST `, so cleanup can target them without touching real entries.
-- Local tooling: the Supabase CLI is a pinned npm dev dependency (`npx supabase …`); there's no global install. Node 24 (`.nvmrc`) to match Vercel and CI; the laptop defaults to Node 26, so `nvm use` before `npm install`.
+- Local tooling: the Supabase CLI is a pinned npm dev dependency (`npx supabase …`); there's no global install. Node 24 (`.nvmrc`) to match Vercel and CI; the laptop's fnm defaults to Node 26 with no shell hook, so prefix commands with `fnm exec --using=24 --`.
 - DB types are generated, not hand-written: `npx supabase gen types typescript --local > src/lib/database.types.ts` after each migration, and both clients are typed `SupabaseClient<Database>`. `types.ts` keeps only the camelCase domain types.
 
 ## Review Focus
@@ -207,10 +207,10 @@ tests/integration/**                Vitest node, against local Supabase
 ### Task 1.0b: Pre-flight (Joel, before Task 1.1; found 2026-10-25)
 
 - [x] **Deployment Protection:** leave it on **Standard Protection**. It protects previews and generated deployment URLs, but not production domains (including the project's `*.vercel.app` production domain), so the share URL is public. Don't pick All Deployments.
-- [ ] **Production URL:** `NEXT_PUBLIC_APP_URL` is `https://chili-chi.vercel.app`, but that domain isn't attached to the project (it returns `DEPLOYMENT_NOT_FOUND`). The project's domains are `chili-jtmcn.vercel.app` and `chili-git-main-jtmcn.vercel.app`. Either add `chili-chi.vercel.app` under Settings → Domains, or set `NEXT_PUBLIC_APP_URL=https://chili-jtmcn.vercel.app` on Production + Preview. The QR code is built from this value.
-- [ ] **Realtime public access:** Supabase → Realtime (sidebar) → Settings → "Allow public access to channels" on (the default). Without it, broadcast pings never arrive and clients fall back to the 10 s poll.
-- [ ] **Local DB URL:** add `SUPABASE_DB_URL=<Session pooler URL>` to `.env.local` (gitignored) for `supabase db push` at the checkpoints.
-- [ ] `nvm use 24` (the laptop default is Node 26).
+- [x] **Production URL:** `chili-chi.vercel.app` is the project's Production domain (verified). It shows "No Deployment" until the first prod build succeeds at the PR A checkpoint, so `NEXT_PUBLIC_APP_URL=https://chili-chi.vercel.app` is correct.
+- [x] **Realtime public access:** Supabase → Realtime (sidebar) → Settings → "Allow public access to channels" on (the default). Without it, broadcast pings never arrive and clients fall back to the 10 s poll.
+- [x] **Local DB URL:** add `SUPABASE_DB_URL=<Session pooler URL>` to `.env.local` (gitignored) for `supabase db push` at the checkpoints.
+- [x] Node 24: the laptop uses fnm (default v26, v24.22.1 installed, no shell hook), so run project commands as `fnm exec --using=24 -- <cmd>`.
 
 ### Task 1.1: App scaffold, test harness, CI
 
