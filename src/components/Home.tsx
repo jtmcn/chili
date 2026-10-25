@@ -1,14 +1,17 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { currentPhase, fetchBallotCount, fetchEvent, offsetFrom, serverNow as serverNowMs } from '@/lib/event'
 import { fetchChilis } from '@/lib/chilis'
 import { useLive } from '@/lib/live'
 import { fetchAllergens, fetchTags } from '@/lib/reference'
-import { fetchTagCounts } from '@/lib/tags'
+import { fetchResults } from '@/lib/results'
+import { fetchTagCounts, topTags } from '@/lib/tags'
 import { ChiliList } from './ChiliList'
 import { Countdown } from './Countdown'
+import { Results } from './Results'
+import type { RefItem, TagCount } from '@/lib/types'
 
 // Fetched client-side so `/` stays static and the build never calls Supabase.
 export function Home() {
@@ -18,22 +21,34 @@ export function Home() {
   const { data: tags } = useLive([], fetchTags, 86_400_000)
   const { data: tagCounts } = useLive(['chili_tags'], fetchTagCounts)
   const { data: ballots } = useLive(['ballots'], fetchBallotCount)
-  // Offset is fixed when the event arrives, so the countdown ignores later phone-clock changes.
+  // Offset is recomputed on each event poll; between polls the countdown ignores phone-clock changes.
   const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event])
-  const voting = !!event?.revealAt && currentPhase(event, serverNowMs(offsetMs)) === 'voting'
-  const canAdd = !!event?.entriesOpen && currentPhase(event, Date.parse(event.serverNow)) !== 'revealed'
+  const [nowMs, setNowMs] = useState<number>()
+  const revealAt = event?.revealAt
+  // Fires at revealAt (server time); re-armed when revealAt or the offset changes.
+  useEffect(() => {
+    if (!revealAt) return
+    const t = setTimeout(() => setNowMs(Date.now()), Math.max(0, Date.parse(revealAt) - serverNowMs(offsetMs)))
+    return () => clearTimeout(t)
+  }, [revealAt, offsetMs])
+  const phase = event ? currentPhase(event, nowMs === undefined ? Date.parse(event.serverNow) : serverNowMs(offsetMs, nowMs)) : undefined
+  const revealed = phase === 'revealed'
+  const voting = !!event?.revealAt && phase === 'voting'
+  const canAdd = !!event?.entriesOpen && !revealed
   return (
     <>
       <main className="mx-auto w-full max-w-md flex-1 px-4 pt-6">
         <h1 className="text-[28px] font-semibold leading-tight sm:text-[40px]">{event?.name ?? 'Chili Cook-Off'}</h1>
-        {event && (
+        {event && !revealed && (
           <p className="mt-1">
-            Results in <Countdown revealAt={event.revealAt} offsetMs={offsetMs} />
+            {event.revealAt && 'Results in '}
+            <Countdown revealAt={event.revealAt} offsetMs={offsetMs} />
           </p>
         )}
         {ballots !== undefined && <p>{ballots === 1 ? '1 ballot in' : `${ballots} ballots in`}</p>}
         <div className="mt-4">
-          {chilis && <ChiliList chilis={chilis} allergens={allergens ?? []} entriesOpen={canAdd} tags={tags} tagCounts={tagCounts} />}
+          {revealed && chilis && <ResultsPanel chiliCount={chilis.length} tags={tags} tagCounts={tagCounts} />}
+          {!revealed && chilis && <ChiliList chilis={chilis} allergens={allergens ?? []} entriesOpen={canAdd} tags={tags} tagCounts={tagCounts} />}
         </div>
       </main>
       {(voting || canAdd) && (
@@ -54,4 +69,24 @@ export function Home() {
       )}
     </>
   )
+}
+
+const RETRY_MS = 1000
+const MAX_RETRIES = 10
+
+function ResultsPanel({ chiliCount, tags, tagCounts }: { chiliCount: number; tags?: RefItem[]; tagCounts?: TagCount[] }) {
+  const { data: rows, refresh } = useLive(['event'], fetchResults)
+  const [tries, setTries] = useState(0)
+  const empty = rows !== undefined && rows.length === 0 && chiliCount > 0
+  // get_results can lag the clock slightly; retry for up to 10 s.
+  useEffect(() => {
+    if (!empty || tries >= MAX_RETRIES) return
+    const t = setTimeout(() => {
+      setTries((n) => n + 1)
+      refresh()
+    }, RETRY_MS)
+    return () => clearTimeout(t)
+  }, [empty, tries, refresh])
+  if (!rows || empty) return <p className="py-6">Counting the votes…</p>
+  return <Results rows={rows} topTags={(id) => topTags(tagCounts ?? [], id, tags ?? [])} />
 }
