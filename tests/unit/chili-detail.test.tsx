@@ -6,7 +6,7 @@ describe('ChiliDetail', () => {
   it('shows description, allergens, disclaimer and back link', () => {
     render(
       <ChiliDetail
-        chili={{ id: 'a', potNumber: 5, name: 'Green Machine', description: 'Tomatillo heavy', cook: 'Bo', allergenIds: ['milk', 'soy'] }}
+        chili={{ id: 'a', potNumber: 5, name: 'Green Machine', description: 'Tomatillo heavy', cook: 'Bo', allergenIds: ['milk', 'soy'], photoPath: null }}
         allergens={[
           { id: 'milk', label: 'Milk', sort: 1 },
           { id: 'soy', label: 'Soy', sort: 2 },

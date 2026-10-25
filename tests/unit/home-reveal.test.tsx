@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
 
 const NOW = Date.parse('2030-01-01T18:00:00Z')
-const chili = { id: 'a', potNumber: 1, name: 'Brisket Fire', description: null, cook: null, allergenIds: [] }
+const chili = { id: 'a', potNumber: 1, name: 'Brisket Fire', description: null, cook: null, allergenIds: [], photoPath: null }
 const state = vi.hoisted(() => ({ event: undefined as unknown, results: [] as unknown[], refreshes: [] as (() => void)[] }))
 
 vi.mock('@/lib/chilis', () => ({ fetchChilis: vi.fn(async () => [chili]) }))

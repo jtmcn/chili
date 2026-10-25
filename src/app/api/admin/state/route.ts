@@ -10,7 +10,7 @@ export async function POST(req: Request): Promise<Response> {
   const db = serverClient()
   const [ev, chilis, allergens, count] = await Promise.all([
     db.rpc('get_event'),
-    db.from('chilis').select('id, pot_number, name, description, cook').order('pot_number'),
+    db.from('chilis').select('id, pot_number, name, description, cook, photo_path').order('pot_number'),
     db.from('chili_allergens').select('chili_id, allergen_id').order('allergen_id'),
     db.rpc('ballot_count'),
   ])
@@ -30,6 +30,7 @@ export async function POST(req: Request): Promise<Response> {
     name: c.name,
     description: c.description,
     cook: c.cook,
+    photoPath: c.photo_path,
     allergenIds: allergens.data.filter((a) => a.chili_id === c.id).map((a) => a.allergen_id),
   }))
   return ok({ event, chilis: out, ballotCount: count.data })

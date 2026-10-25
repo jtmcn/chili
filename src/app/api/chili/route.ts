@@ -24,5 +24,7 @@ export async function POST(req: Request): Promise<Response> {
   }
   const { data, error } = res!
   if (error) return fromDbError(error)
-  return ok({ potNumber: data }, 201)
+  const row = await db.from('chilis').select('id').eq('pot_number', data).single()
+  if (row.error) return fail('server_error', 500)
+  return ok({ potNumber: data, chiliId: row.data.id }, 201)
 }

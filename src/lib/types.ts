@@ -16,6 +16,7 @@ export interface PublicChili {
   description: string | null
   cook: string | null
   allergenIds: string[]
+  photoPath: string | null
 }
 
 export interface RefItem {

@@ -15,6 +15,7 @@ const chili: PublicChili = {
   description: null,
   cook: 'Ann',
   allergenIds: ['eggs'],
+  photoPath: null,
 }
 
 describe('ChiliCard', () => {
