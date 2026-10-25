@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { PublicChili, RefItem } from '@/lib/types'
 import { PotNumber } from '@/components/PotNumber'
+import { photoUrl } from '@/lib/photo'
 import { useAdminPost } from './AdminGate'
 
 type Draft = { name: string; cook: string; potNumber: string; description: string; allergens: string[] }
@@ -123,6 +124,10 @@ export function AdminChilis({
               <div className="flex gap-3">
                 <div className="w-[72px] shrink-0">
                   <PotNumber n={c.potNumber} />
+                  {c.photoPath && (
+                    // eslint-disable-next-line @next/next/no-img-element -- avoid image optimizer cost
+                    <img src={photoUrl(c.photoPath)} alt={`Photo of ${c.name}`} loading="lazy" className="mt-2 size-16 rounded object-cover" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[22px] font-semibold">{c.name}</p>
@@ -132,7 +137,7 @@ export function AdminChilis({
                     Allergens:{' '}
                     {c.allergenIds.map((id) => allergens.find((a) => a.id === id)?.label ?? id).join(', ') || 'none'}
                   </p>
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       type="button"
                       className="min-h-12 rounded border border-enamel px-4"
@@ -151,6 +156,16 @@ export function AdminChilis({
                     >
                       Delete
                     </button>
+                    {c.photoPath && (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        className="min-h-12 rounded border border-chili px-4 text-chili disabled:opacity-60"
+                        onClick={() => confirm(`Remove the photo from ${c.name}?`) && run({ action: 'removePhoto', chiliId: c.id })}
+                      >
+                        Remove photo
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

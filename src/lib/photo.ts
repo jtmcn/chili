@@ -18,3 +18,32 @@ export async function resizeToJpeg(file: File, max = 1024, quality = 0.8): Promi
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode failed'))), 'image/jpeg', quality),
   )
 }
+
+const FAILED = "Couldn't upload the photo. Try again."
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+export type UploadResult = { ok: true; photoUrl: string } | { ok: false; message: string }
+
+// Multipart, so not postJson; same policy: retry thrown fetches and 5xx only.
+export async function uploadPhoto(
+  fields: { deviceId: string; chiliId: string; file: Blob },
+  { retries = 3, delayMs = 500 } = {},
+): Promise<UploadResult> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) await sleep(delayMs * attempt)
+    const body = new FormData()
+    body.set('deviceId', fields.deviceId)
+    body.set('chiliId', fields.chiliId)
+    body.set('file', fields.file, 'photo.jpg')
+    try {
+      const res = await fetch('/api/chili/photo', { method: 'POST', body })
+      if (res.status >= 500 && attempt < retries) continue
+      const json = await res.json().catch(() => null)
+      if (json?.ok) return { ok: true, photoUrl: json.photoUrl }
+      return { ok: false, message: json?.message ?? FAILED }
+    } catch {
+      // fall through to retry
+    }
+  }
+  return { ok: false, message: FAILED }
+}

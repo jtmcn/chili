@@ -21,3 +21,17 @@ describe('ChiliDetail', () => {
     expect(screen.queryByText('Bo')).not.toBeInTheDocument()
   })
 })
+
+describe('ChiliDetail photo', () => {
+  const base = { id: 'a', potNumber: 5, name: 'Green Machine', description: null, cook: null, allergenIds: [] }
+  it('renders the photo when photoPath is set', () => {
+    render(<ChiliDetail chili={{ ...base, photoPath: 'a/p.jpg' }} allergens={[]} />)
+    const img = screen.getByRole('img', { name: 'Photo of Green Machine' })
+    expect(img.getAttribute('src')).toMatch(/\/storage\/v1\/object\/public\/chili-photos\/a\/p\.jpg$/)
+    expect(img).toHaveAttribute('loading', 'lazy')
+  })
+  it('renders no photo when photoPath is null', () => {
+    render(<ChiliDetail chili={{ ...base, photoPath: null }} allergens={[]} />)
+    expect(screen.queryByRole('img', { name: /^Photo of/ })).not.toBeInTheDocument()
+  })
+})

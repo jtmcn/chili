@@ -21,7 +21,7 @@ export function Wizard() {
   const [nameError, setNameError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [allergenError, setAllergenError] = useState<string | null>(null)
-  const [pot, setPot] = useState<number | null>(null)
+  const [created, setCreated] = useState<{ potNumber: number; chiliId: string } | null>(null)
 
   const loadAllergens = () =>
     fetchAllergens().then(setAllergens, () => setAllergenError("Couldn't load the allergen list."))
@@ -35,13 +35,13 @@ export function Wizard() {
     dispatch(a)
   }
 
-  if (pot !== null) return <Success potNumber={pot} />
+  if (created) return <Success potNumber={created.potNumber} chiliId={created.chiliId} />
 
   async function submit() {
     setPending(true)
-    const r = await postJson<{ potNumber: number }>('/api/chili', toPayload(s, getDeviceId()))
+    const r = await postJson<{ potNumber: number; chiliId: string }>('/api/chili', toPayload(s, getDeviceId()))
     setPending(false)
-    if (r.ok) return setPot(r.potNumber)
+    if (r.ok) return setCreated({ potNumber: r.potNumber, chiliId: r.chiliId })
     // Only name problems are fixed on step 1; the rest stay on the review.
     if (r.error === 'name_taken' || r.error === 'invalid') {
       setNameError(r.message)

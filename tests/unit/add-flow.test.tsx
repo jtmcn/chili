@@ -28,7 +28,7 @@ describe('add flow', () => {
   beforeEach(() => post.mockReset())
 
   it('walks through to success', async () => {
-    post.mockResolvedValue({ ok: true, potNumber: 7 } as never)
+    post.mockResolvedValue({ ok: true, potNumber: 7, chiliId: 'c7' } as never)
     const user = userEvent.setup()
     render(<AddPage />)
     expect(screen.getByText('Step 1 of 4')).toBeInTheDocument()

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { photoUrl } from "@/lib/photo";
 import type { PublicChili, RefItem, TagCount } from "@/lib/types";
 import { AllergenBadges } from "./AllergenBadges";
 import { AllergenDisclaimer } from "./AllergenDisclaimer";
@@ -34,6 +35,15 @@ export function ChiliDetail({
       <h1 className="mt-3 text-[28px] font-semibold leading-tight">
         {chili.name}
       </h1>
+      {chili.photoPath && (
+        // eslint-disable-next-line @next/next/no-img-element -- avoid image optimizer cost
+        <img
+          src={photoUrl(chili.photoPath)}
+          alt={`Photo of ${chili.name}`}
+          loading="lazy"
+          className="mt-3 aspect-[4/3] w-full rounded object-cover"
+        />
+      )}
       {chili.description && (
         <p className="mt-3 text-[18px]">{chili.description}</p>
       )}
