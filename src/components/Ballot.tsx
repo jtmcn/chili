@@ -31,11 +31,11 @@ export function Ballot() {
       setHasBallot(true)
       setConfirmed(true)
       setError(undefined)
-    } else if (res.error === 'voting_closed') {
-      clearPending()
-      setClosed(true)
     } else {
-      setError(res.message)
+      // a 4xx is final; only network/5xx keep the ballot for retry
+      if (res.error !== 'network' && res.error !== 'server_error') clearPending()
+      if (res.error === 'voting_closed') setClosed(true)
+      else setError(res.message)
     }
   }
 
@@ -57,11 +57,14 @@ export function Ballot() {
     })()
   }, [])
 
+  // drop picks for chilis that no longer exist
+  const live = picks.map((id) => (!chilis || chilis.some((c) => c.id === id) ? id : null)) as Picks
+
   async function save() {
     setSaving(true)
     setConfirmed(false)
-    savePending(picks)
-    await submit(picks)
+    savePending(live)
+    await submit(live)
     setSaving(false)
   }
 
@@ -71,7 +74,7 @@ export function Ballot() {
 
   if (!event || !chilis) return <main className={`${shell} flex-1 pt-6`} />
   if (!open) {
-    const isClosed = closed || phase === 'revealed'
+    const isClosed = phase === 'revealed'
     const time = event.revealAt
       ? new Date(event.revealAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
       : ''
@@ -98,13 +101,16 @@ export function Ballot() {
                 <p className="truncate text-[22px] font-semibold">{c.name}</p>
                 <div className="mt-1 flex">
                   {RANKS.map((label, i) => {
-                    const pressed = picks[i] === c.id
+                    const pressed = live[i] === c.id
                     return (
                       <button
                         key={label}
                         type="button"
                         aria-pressed={pressed}
-                        onClick={() => setPicks((p) => setPick(p, i as 0 | 1 | 2, c.id))}
+                        onClick={() => {
+                          setConfirmed(false)
+                          setPicks(setPick(live, i as 0 | 1 | 2, c.id))
+                        }}
                         className={`min-h-12 min-w-12 flex-1 border border-enamel first:rounded-l-md last:rounded-r-md ${
                           pressed ? 'bg-enamel text-plate' : 'bg-plate text-ink'
                         }`}
@@ -125,7 +131,7 @@ export function Ballot() {
             {RANKS.map((label, i) => (
               <li key={label} className="flex gap-2">
                 <span className="w-10 font-semibold">{label}</span>
-                <span className={picks[i] ? '' : 'text-ink/60'}>{picks[i] ? name(picks[i]) : 'Not picked'}</span>
+                <span className={live[i] ? '' : 'text-ink/60'}>{live[i] ? name(live[i]) : 'Not picked'}</span>
               </li>
             ))}
           </ol>
@@ -140,7 +146,7 @@ export function Ballot() {
               <p>
                 Results in <Countdown revealAt={event.revealAt} offsetMs={offsetMs} />
               </p>
-              {picks.map((id, i) => (
+              {live.map((id, i) => (
                 <p key={i}>{name(id)}</p>
               ))}
             </div>
@@ -148,7 +154,7 @@ export function Ballot() {
           <button
             type="button"
             onClick={save}
-            disabled={!isComplete(picks) || saving}
+            disabled={!isComplete(live) || saving}
             className="mt-2 min-h-12 w-full rounded-md bg-enamel px-4 text-plate disabled:opacity-60"
           >
             {saving ? 'Saving…' : hasBallot ? 'Update my picks' : 'Save my picks'}

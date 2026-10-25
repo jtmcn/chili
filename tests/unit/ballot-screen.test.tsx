@@ -138,4 +138,36 @@ describe('ballot screen', () => {
     await user.click(screen.getByRole('button', { name: 'Save my picks' }))
     expect(await screen.findByText(/^Voting is closed\. Results at /)).toBeInTheDocument()
   })
+
+  it('prunes picks for deleted chilis and clears a rejected pending ballot', async () => {
+    localStorage.setItem('chili.pendingBallot', JSON.stringify(['c4', 'gone', 'c2']))
+    route(undefined, { ok: false, error: 'invalid', message: 'Bad ballot' })
+    render(<BallotPage />)
+    await screen.findByText('Bad ballot')
+    expect(localStorage.getItem('chili.pendingBallot')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save my picks' })).toBeDisabled()
+    expect(screen.getByText('Not picked')).toBeInTheDocument()
+    expect(seg(4, '1st')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('keeps setup copy when voting_closed arrives during setup', async () => {
+    vi.mocked(fetchEvent).mockResolvedValueOnce(ev('voting')).mockResolvedValue(ev('setup', null))
+    route(undefined, { ok: false, error: 'voting_closed', message: 'closed' })
+    localStorage.setItem('chili.pendingBallot', JSON.stringify(['c4', 'c9', 'c2']))
+    render(<BallotPage />)
+    expect(await screen.findByText('Voting opens when the host starts it.')).toBeInTheDocument()
+  })
+
+  it('hides the confirmation when a pick changes', async () => {
+    const user = userEvent.setup()
+    render(<BallotPage />)
+    await screen.findByRole('img', { name: 'Pot 4' })
+    await user.click(seg(4, '1st'))
+    await user.click(seg(9, '2nd'))
+    await user.click(seg(2, '3rd'))
+    await user.click(screen.getByRole('button', { name: 'Save my picks' }))
+    await screen.findByText('Picks saved')
+    await user.click(seg(7, '3rd'))
+    expect(screen.queryByText('Picks saved')).toBeNull()
+  })
 })
