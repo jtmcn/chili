@@ -169,7 +169,16 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "ballot_count":
+            "admin_delete_chili":
+{ Args: { "p_chili_id": string }; Returns: undefined
+                           },
+"admin_reveal_now":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"admin_update_chili":
+{ Args: { "p_allergens": (string)[],"p_chili_id": string,"p_cook": string,"p_description": string,"p_name": string,"p_pot_number": number }; Returns: undefined
+                           },
+"ballot_count":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "create_chili":

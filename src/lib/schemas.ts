@@ -41,3 +41,37 @@ export const ballotInput = z.object({
 })
 
 export const ballotMineInput = z.object({ deviceId: z.string().min(1) })
+
+const adminFields = {
+  name: z.string().trim().min(2).max(40),
+  cook: z.string().trim().max(40),
+  description: z.string().trim().max(200),
+  allergens: z.array(z.enum(ALLERGEN_IDS)),
+}
+
+export const adminChiliInput = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('create'),
+    name: adminFields.name,
+    cook: adminFields.cook.optional(),
+    description: adminFields.description.optional(),
+    allergens: adminFields.allergens.optional(),
+  }),
+  z.object({
+    action: z.literal('update'),
+    chiliId: z.uuid(),
+    name: adminFields.name.optional(),
+    cook: adminFields.cook.optional(),
+    description: adminFields.description.optional(),
+    allergens: adminFields.allergens.optional(),
+    potNumber: z.number().int().positive().nullish(),
+  }),
+  z.object({ action: z.literal('delete'), chiliId: z.uuid() }),
+])
+
+export const adminEventInput = z.object({
+  status: z.enum(['setup', 'voting']).optional(),
+  entriesOpen: z.boolean().optional(),
+  revealAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  revealNow: z.literal(true).optional(),
+})
