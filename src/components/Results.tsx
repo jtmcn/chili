@@ -24,7 +24,7 @@ export function Results({
               <span className="mt-0.5 block text-[22px] font-semibold leading-tight">{r.name}</span>
               <span className="block">{r.cook ? `Cook: ${r.cook}` : null}</span>
               <span className="block">
-                {r.points === 1 ? '1 point' : `${r.points} points`} · {r.firsts === 1 ? '1 first' : `${r.firsts} firsts`}
+                {r.points === 1 ? '1 point' : `${r.points} points`}, {r.firsts === 1 ? '1 first' : `${r.firsts} firsts`}
               </span>
               <TagPills tags={tags} />
             </span>

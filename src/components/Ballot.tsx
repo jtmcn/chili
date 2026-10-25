@@ -112,10 +112,10 @@ export function Ballot() {
         <h1 className="text-[28px] font-semibold leading-tight">Your top 3</h1>
         <ul className="mt-2">
           {chilis.map((c) => (
-            <li key={c.id} className="grid min-h-[72px] grid-cols-[72px_1fr] items-center gap-3.5 border-b border-rule py-3.5">
+            <li key={c.id} className="grid min-h-[72px] grid-cols-[72px_1fr] items-start gap-3.5 border-b border-rule py-3.5">
               <PotNumber n={c.potNumber} />
               <div className="min-w-0">
-                <p className="truncate text-[22px] font-semibold leading-tight">{c.name}</p>
+                <p className="text-[22px] font-semibold leading-tight [overflow-wrap:anywhere]">{c.name}</p>
                 <div className="mt-2 flex divide-x-2 divide-enamel overflow-hidden rounded-[10px] border-2 border-enamel">
                   {RANKS.map((label, i) => {
                     const pressed = live[i] === c.id
