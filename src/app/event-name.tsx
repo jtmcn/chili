@@ -9,5 +9,5 @@ export function EventName() {
   useEffect(() => {
     fetchEvent().then((e) => setName(e.name), () => setName(null))
   }, [])
-  return <h1 className="text-3xl font-semibold">{name ?? 'Chili Cook-Off'}</h1>
+  return <h1 className="text-[28px] font-semibold leading-tight sm:text-[40px]">{name ?? 'Chili Cook-Off'}</h1>
 }
