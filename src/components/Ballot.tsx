@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { clearPending, isComplete, loadPending, savePending, setPick, type Picks } from '@/lib/ballot'
 import { fetchChilis } from '@/lib/chilis'
 import { getDeviceId } from '@/lib/device-id'
 import { currentPhase, fetchEvent, offsetFrom } from '@/lib/event'
 import { useLive } from '@/lib/live'
 import { postJson } from '@/lib/post-json'
+import { useRevealRedirect } from '@/lib/use-reveal-redirect'
 import { Countdown } from './Countdown'
 import { PotNumber } from './PotNumber'
 
@@ -17,6 +19,7 @@ export function Ballot() {
   const { data: event } = useLive(['event'], fetchEvent)
   const { data: chilis } = useLive(['chilis'], fetchChilis)
   const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event])
+  useRevealRedirect(event, offsetMs)
   const [picks, setPicks] = useState<Picks>(EMPTY)
   const [hasBallot, setHasBallot] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -82,6 +85,9 @@ export function Ballot() {
       <main className={`${shell} flex-1 pt-6`}>
         <h1 className="text-[28px] font-semibold leading-tight">Your top 3</h1>
         <p className="mt-4">{isClosed ? `Voting is closed. Results at ${time}.` : 'Voting opens when the host starts it.'}</p>
+        <Link href="/" className="flex min-h-12 items-center text-enamel underline">
+          Back to all chilis
+        </Link>
       </main>
     )
   }

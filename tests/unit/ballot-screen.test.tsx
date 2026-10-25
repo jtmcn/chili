@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }))
 vi.mock('@/lib/post-json', () => ({ postJson: vi.fn() }))
 vi.mock('@/lib/device-id', () => ({ getDeviceId: () => 'test-dev' }))
 vi.mock('@/lib/chilis', () => ({ fetchChilis: vi.fn() }))
@@ -125,6 +126,7 @@ describe('ballot screen', () => {
     render(<BallotPage />)
     expect(await screen.findByText(/^Voting is closed\. Results at /)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save my picks' })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Back to all chilis' })).toHaveAttribute('href', '/')
   })
 
   it('shows closed on a voting_closed error', async () => {
