@@ -17,18 +17,20 @@ export function useLive<T>(
     fetcherRef.current = fetcher
   })
   const seq = useRef(0)
+  const applied = useRef(0)
   const key = topics.join(',')
 
   const refresh = useCallback(() => {
     const id = ++seq.current
     fetcherRef.current().then(
       (d) => {
-        if (id !== seq.current) return // a newer fetch started
+        if (id < applied.current) return // older than what's shown
+        applied.current = id
         setData(d)
         setError(undefined)
       },
       (e) => {
-        if (id === seq.current) setError(e)
+        if (id >= applied.current) setError(e)
       },
     )
   }, [])

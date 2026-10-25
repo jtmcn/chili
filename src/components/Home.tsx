@@ -11,7 +11,7 @@ import { ChiliList } from './ChiliList'
 export function Home() {
   const { data: event } = useLive(['event'], fetchEvent)
   const { data: chilis } = useLive(['chilis'], fetchChilis)
-  const { data: allergens } = useLive([], fetchAllergens)
+  const { data: allergens } = useLive([], fetchAllergens, 86_400_000)
   const canAdd = !!event?.entriesOpen && currentPhase(event, Date.parse(event.serverNow)) !== 'revealed'
   return (
     <>

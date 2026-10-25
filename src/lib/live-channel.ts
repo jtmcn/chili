@@ -17,11 +17,9 @@ export function subscribeLive(onChange: (t: LiveTopic) => void): () => void {
       })
       .subscribe()
   }
+  // Never tear the channel down: realtime-js reuses a leaving channel by topic,
+  // so a resubscribe after navigation would no-op and pings would stop.
   return () => {
     listeners.delete(onChange)
-    if (listeners.size === 0 && channel) {
-      void browserClient().removeChannel(channel)
-      channel = undefined
-    }
   }
 }

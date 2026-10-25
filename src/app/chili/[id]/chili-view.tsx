@@ -10,7 +10,7 @@ import { fetchAllergens } from '@/lib/reference'
 export function ChiliView() {
   const { id } = useParams<{ id: string }>()
   const { data: chili } = useLive(['chilis'], () => fetchChili(id))
-  const { data: allergens } = useLive([], fetchAllergens)
+  const { data: allergens } = useLive([], fetchAllergens, 86_400_000)
   return (
     <main className="mx-auto w-full max-w-md flex-1 px-4 py-6">
       {chili ? (

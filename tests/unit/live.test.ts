@@ -54,6 +54,7 @@ describe('useLive', () => {
 
   it('cleans up on unmount', async () => {
     const { fetcher, unmount } = await mount()
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
     unmount()
     expect(unsubscribe).toHaveBeenCalledTimes(1)
     await act(async () => { await vi.advanceTimersByTimeAsync(20_000) })
@@ -72,5 +73,16 @@ describe('useLive', () => {
     expect(result.current.data).toBe('new')
     await act(async () => resolveFirst('old'))
     expect(result.current.data).toBe('new')
+  })
+
+  it('applies in-flight responses that are newer than the last applied', async () => {
+    const res: Array<(v: string) => void> = []
+    const fetcher = vi.fn(() => new Promise<string>((r) => res.push(r)))
+    const { result } = renderHook(() => useLive(['chilis'], fetcher))
+    await act(async () => ping('chilis'))
+    await act(async () => res[0]('first'))
+    expect(result.current.data).toBe('first')
+    await act(async () => res[1]('second'))
+    expect(result.current.data).toBe('second')
   })
 })
