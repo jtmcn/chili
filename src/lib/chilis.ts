@@ -12,6 +12,7 @@ export async function fetchChilis(): Promise<PublicChili[]> {
       description: r.description,
       cook: r.cook,
       allergenIds: r.allergen_ids,
+      photoPath: r.photo_path,
     }))
     .sort((a, b) => a.potNumber - b.potNumber)
 }

@@ -9,7 +9,7 @@ export function StepDescription({ value, onChange }: { value: string; onChange: 
           maxLength={200}
           rows={4}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded border border-ink px-3 py-2"
+          className="rounded-[10px] border-2 border-ink px-3 py-2"
         />
       </label>
       <p aria-live="polite">{value.length}/200</p>

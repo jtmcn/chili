@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     environment: 'node',
     include: ['tests/integration/**/*.test.{ts,tsx}'],
+    setupFiles: ['tests/integration/setup.ts'],
     // Every file calls resetDb() on the same database.
     fileParallelism: false,
     env: loadEnv(mode, process.cwd(), ''),

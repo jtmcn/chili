@@ -15,6 +15,7 @@ const chili: PublicChili = {
   description: null,
   cook: 'Ann',
   allergenIds: ['eggs'],
+  photoPath: null,
 }
 
 describe('ChiliCard', () => {
@@ -36,7 +37,7 @@ describe('ChiliCard', () => {
   })
   it('shows top tags with counts', () => {
     render(<ChiliCard chili={chili} allergens={allergens} topTags={[{ label: 'Smoky', count: 4 }]} />)
-    expect(screen.getByText('Smoky 4')).toBeInTheDocument()
+    expect(screen.getByText('Smoky')).toHaveTextContent('Smoky 4')
   })
 })
 

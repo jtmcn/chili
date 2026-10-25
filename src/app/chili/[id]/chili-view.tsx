@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { ChiliDetail } from "@/components/ChiliDetail";
+import { EventBand } from "@/components/EventBand";
 import { fetchChili } from "@/lib/chilis";
 import { useLive } from "@/lib/live";
 import { currentPhase, fetchEvent, offsetFrom } from "@/lib/event";
@@ -25,29 +26,32 @@ export function ChiliView() {
     !!event?.revealAt &&
     currentPhase(event, Date.parse(event.serverNow)) === "voting";
   return (
-    <main className="mx-auto w-full max-w-md flex-1 px-4 py-6">
-      {chili ? (
-        <ChiliDetail
-          chili={chili}
-          allergens={allergens ?? []}
-          tags={tags}
-          tagCounts={tagCounts}
-          tagsEnabled={tagsEnabled}
-          onTagChanged={refresh}
-        />
-      ) : (
-        chili === null && (
-          <>
-            <p className="text-[18px]">Chili not found.</p>
-            <Link
-              href="/"
-              className="flex min-h-12 items-center text-enamel underline"
-            >
-              Back to all chilis
-            </Link>
-          </>
-        )
-      )}
-    </main>
+    <>
+      <EventBand size="compact">{event?.name}</EventBand>
+      <main className="mx-auto w-full max-w-md flex-1 px-4 pt-2 pb-6">
+        {chili ? (
+          <ChiliDetail
+            chili={chili}
+            allergens={allergens ?? []}
+            tags={tags}
+            tagCounts={tagCounts}
+            tagsEnabled={tagsEnabled}
+            onTagChanged={refresh}
+          />
+        ) : (
+          chili === null && (
+            <>
+              <p className="text-[18px]">Chili not found.</p>
+              <Link
+                href="/"
+                className="flex min-h-12 items-center text-enamel underline"
+              >
+                Back to all chilis
+              </Link>
+            </>
+          )
+        )}
+      </main>
+    </>
   );
 }

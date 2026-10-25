@@ -56,6 +56,12 @@ export async function POST(req: Request): Promise<Response> {
     if (error) return fromDbError(error)
     return ok({})
   }
+  if (v.action === 'removePhoto') {
+    // storage object is left behind; it's unreferenced and cheap
+    const { error } = await db.rpc('admin_set_chili_photo', { p_chili_id: v.chiliId, p_path: null as unknown as string })
+    if (error) return fromDbError(error)
+    return ok({})
+  }
   const { error } = await db.rpc('admin_delete_chili', { p_chili_id: v.chiliId })
   if (error) return fromDbError(error)
   return ok({})

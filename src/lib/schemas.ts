@@ -40,6 +40,11 @@ export const ballotInput = z.object({
     .refine((p) => new Set(p).size === p.length, { message: 'Picks must be distinct' }),
 })
 
+export const photoInput = z.object({
+  deviceId: z.string().min(1).max(100),
+  chiliId: z.uuid(),
+})
+
 export const ballotMineInput = z.object({ deviceId: z.string().min(1).max(100) })
 
 const adminFields = {
@@ -68,6 +73,7 @@ export const adminChiliInput = z.discriminatedUnion('action', [
     potNumber: z.number().int().positive().nullish(),
   }),
   z.object({ action: z.literal('delete'), chiliId: z.uuid() }),
+  z.object({ action: z.literal('removePhoto'), chiliId: z.uuid() }),
 ])
 
 export const adminEventInput = z.object({

@@ -123,14 +123,14 @@ isOneToOne: false
                   ]
                 },"chilis": {
                   Row: {
-                    "cook": string | null,"created_at": string,"description": string | null,"id": string,"name": string,"owner_device_id": string,"pot_number": number,"updated_at": string
+                    "cook": string | null,"created_at": string,"description": string | null,"id": string,"name": string,"owner_device_id": string,"photo_path": string | null,"pot_number": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "cook"?: string | null,"created_at"?: string,"description"?: string | null,"id"?: string,"name": string,"owner_device_id": string,"pot_number"?: number,"updated_at"?: string
+                    "cook"?: string | null,"created_at"?: string,"description"?: string | null,"id"?: string,"name": string,"owner_device_id": string,"photo_path"?: string | null,"pot_number"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "cook"?: string | null,"created_at"?: string,"description"?: string | null,"id"?: string,"name"?: string,"owner_device_id"?: string,"pot_number"?: number,"updated_at"?: string
+                    "cook"?: string | null,"created_at"?: string,"description"?: string | null,"id"?: string,"name"?: string,"owner_device_id"?: string,"photo_path"?: string | null,"pot_number"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -175,6 +175,9 @@ isOneToOne: false
 "admin_reveal_now":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"admin_set_chili_photo":
+{ Args: { "p_chili_id": string,"p_path": string }; Returns: undefined
+                           },
 "admin_update_chili":
 { Args: { "p_allergens": (string)[],"p_chili_id": string,"p_cook": string,"p_description": string,"p_name": string,"p_pot_number": number }; Returns: undefined
                            },
@@ -189,7 +192,7 @@ isOneToOne: false
                            },
 "get_chilis":
 { Args: Record<PropertyKey, never>; Returns: {
-              "allergen_ids": (string)[],"cook": string,"description": string,"id": string,"name": string,"pot_number": number
+              "allergen_ids": (string)[],"cook": string,"description": string,"id": string,"name": string,"photo_path": string,"pot_number": number
             }[]
                            },
 "get_event":
@@ -206,6 +209,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "chili_id": string,"count": number,"tag_id": string
             }[]
+                           },
+"set_chili_photo":
+{ Args: { "p_chili_id": string,"p_device_id": string,"p_path": string }; Returns: undefined
                            },
 "set_tag":
 { Args: { "p_chili_id": string,"p_device_id": string,"p_on": boolean,"p_tag_id": string }; Returns: undefined

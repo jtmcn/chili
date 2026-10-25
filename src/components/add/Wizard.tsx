@@ -11,8 +11,8 @@ import { StepDescription } from './StepDescription'
 import { StepName } from './StepName'
 import { StepReview } from './StepReview'
 import { Success } from './Success'
+import { primaryBtn, secondaryBtn } from '@/components/buttons'
 
-const btn = 'min-h-12 rounded px-5 text-[18px] font-semibold disabled:opacity-60'
 
 export function Wizard() {
   const [s, dispatch] = useReducer(wizardReducer, initialWizard)
@@ -21,7 +21,7 @@ export function Wizard() {
   const [nameError, setNameError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [allergenError, setAllergenError] = useState<string | null>(null)
-  const [pot, setPot] = useState<number | null>(null)
+  const [created, setCreated] = useState<{ potNumber: number; chiliId: string } | null>(null)
 
   const loadAllergens = () =>
     fetchAllergens().then(setAllergens, () => setAllergenError("Couldn't load the allergen list."))
@@ -35,13 +35,13 @@ export function Wizard() {
     dispatch(a)
   }
 
-  if (pot !== null) return <Success potNumber={pot} />
+  if (created) return <Success potNumber={created.potNumber} chiliId={created.chiliId} />
 
   async function submit() {
     setPending(true)
-    const r = await postJson<{ potNumber: number }>('/api/chili', toPayload(s, getDeviceId()))
+    const r = await postJson<{ potNumber: number; chiliId: string }>('/api/chili', toPayload(s, getDeviceId()))
     setPending(false)
-    if (r.ok) return setPot(r.potNumber)
+    if (r.ok) return setCreated({ potNumber: r.potNumber, chiliId: r.chiliId })
     // Only name problems are fixed on step 1; the rest stay on the review.
     if (r.error === 'name_taken' || r.error === 'invalid') {
       setNameError(r.message)
@@ -104,9 +104,9 @@ export function Wizard() {
           </>
         )}
       </div>
-      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-rule bg-plate px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-rule bg-plate px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {s.step > 1 && (
-          <button type="button" onClick={() => nav({ type: 'back' })} className={`${btn} border border-ink`}>
+          <button type="button" onClick={() => nav({ type: 'back' })} className={secondaryBtn}>
             Back
           </button>
         )}
@@ -115,12 +115,12 @@ export function Wizard() {
             type="button"
             disabled={blocked}
             onClick={() => nav({ type: 'next' })}
-            className={`${btn} flex-1 bg-enamel text-plate`}
+            className={`${primaryBtn} flex-1`}
           >
             {skippable ? 'Skip' : 'Next'}
           </button>
         ) : (
-          <button type="button" disabled={pending} onClick={submit} className={`${btn} flex-1 bg-enamel text-plate`}>
+          <button type="button" disabled={pending} onClick={submit} className={`${primaryBtn} flex-1`}>
             {pending ? 'Adding…' : 'Add my chili'}
           </button>
         )}

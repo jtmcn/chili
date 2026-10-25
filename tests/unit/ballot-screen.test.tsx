@@ -24,7 +24,7 @@ import { fetchEvent } from '@/lib/event'
 import BallotPage from '@/app/ballot/page'
 
 const post = vi.mocked(postJson)
-const chili = (n: number, name: string) => ({ id: `c${n}`, potNumber: n, name, description: null, cook: null, allergenIds: [] })
+const chili = (n: number, name: string) => ({ id: `c${n}`, potNumber: n, name, description: null, cook: null, allergenIds: [], photoPath: null })
 const REVEAL = '2030-01-01T20:00:00Z'
 const ev = (status: string, revealAt: string | null = REVEAL, serverNow = '2030-01-01T18:00:00Z') =>
   ({ name: 'E', status, revealAt, entriesOpen: false, serverNow }) as never

@@ -12,6 +12,8 @@ describe('POST /api/chili', () => {
     expect(r.status).toBe(201)
     expect(r.json.ok).toBe(true)
     expect(r.json.potNumber).toBeGreaterThanOrEqual(1)
+    const row = (await db().from('chilis').select('id').eq('pot_number', r.json.potNumber).single()).data!
+    expect(r.json.chiliId).toBe(row.id)
   })
   it('accepts noAllergens', async () => {
     const r = await call(POST, { deviceId: 'test-dev-1', name: 'TEST Plain', noAllergens: true })
