@@ -74,7 +74,7 @@ export function Ballot() {
 
   if (!event || !chilis) return <main className={`${shell} flex-1 pt-6`} />
   if (!open) {
-    const isClosed = phase === 'revealed'
+    const isClosed = phase === 'revealed' || (closed && phase === 'voting')
     const time = event.revealAt
       ? new Date(event.revealAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
       : ''
