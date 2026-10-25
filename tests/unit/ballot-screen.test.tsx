@@ -151,11 +151,13 @@ describe('ballot screen', () => {
   })
 
   it('keeps setup copy when voting_closed arrives during setup', async () => {
-    vi.mocked(fetchEvent).mockResolvedValueOnce(ev('voting')).mockResolvedValue(ev('setup', null))
+    vi.mocked(fetchEvent).mockResolvedValue(ev('setup', null))
     route(undefined, { ok: false, error: 'voting_closed', message: 'closed' })
     localStorage.setItem('chili.pendingBallot', JSON.stringify(['c4', 'c9', 'c2']))
     render(<BallotPage />)
+    await vi.waitFor(() => expect(post).toHaveBeenCalledWith('/api/ballot', expect.anything()))
     expect(await screen.findByText('Voting opens when the host starts it.')).toBeInTheDocument()
+    expect(screen.queryByText(/Voting is closed/)).toBeNull()
   })
 
   it('hides the confirmation when a pick changes', async () => {
