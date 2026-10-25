@@ -15,6 +15,12 @@ export async function fetchEvent(): Promise<EventState> {
   }
 }
 
+export async function fetchBallotCount(): Promise<number> {
+  const { data, error } = await browserClient().rpc('ballot_count')
+  if (error) throw error
+  return data
+}
+
 // Offset = server clock minus local clock at the moment the response arrived.
 export function offsetFrom(e: EventState, receivedAt = Date.now()): number {
   return Date.parse(e.serverNow) - receivedAt

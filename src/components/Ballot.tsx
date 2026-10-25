@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { clearPending, isComplete, loadPending, savePending, setPick, type Picks } from '@/lib/ballot'
 import { fetchChilis } from '@/lib/chilis'
 import { getDeviceId } from '@/lib/device-id'
-import { currentPhase, fetchEvent } from '@/lib/event'
+import { currentPhase, fetchEvent, offsetFrom } from '@/lib/event'
 import { useLive } from '@/lib/live'
 import { postJson } from '@/lib/post-json'
+import { Countdown } from './Countdown'
 import { PotNumber } from './PotNumber'
 
 const RANKS = ['1st', '2nd', '3rd'] as const
@@ -15,6 +16,7 @@ const EMPTY: Picks = [null, null, null]
 export function Ballot() {
   const { data: event } = useLive(['event'], fetchEvent)
   const { data: chilis } = useLive(['chilis'], fetchChilis)
+  const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event])
   const [picks, setPicks] = useState<Picks>(EMPTY)
   const [hasBallot, setHasBallot] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -135,7 +137,9 @@ export function Ballot() {
           {confirmed && (
             <div className="mt-1">
               <p className="font-semibold">Picks saved</p>
-              {/* Task 5.3: results countdown goes here */}
+              <p>
+                Results in <Countdown revealAt={event.revealAt} offsetMs={offsetMs} />
+              </p>
               {picks.map((id, i) => (
                 <p key={i}>{name(id)}</p>
               ))}
