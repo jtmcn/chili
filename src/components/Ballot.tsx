@@ -9,7 +9,9 @@ import { currentPhase, fetchEvent, offsetFrom } from '@/lib/event'
 import { useLive } from '@/lib/live'
 import { postJson } from '@/lib/post-json'
 import { useRevealRedirect } from '@/lib/use-reveal-redirect'
+import { actionBar, primaryBtn } from './buttons'
 import { Countdown } from './Countdown'
+import { EventBand } from './EventBand'
 import { PotNumber } from './PotNumber'
 
 const RANKS = ['1st', '2nd', '3rd'] as const
@@ -74,38 +76,47 @@ export function Ballot() {
   const phase = event && currentPhase(event, Date.parse(event.serverNow))
   const open = phase === 'voting' && !!event?.revealAt && !closed
   const shell = 'mx-auto w-full max-w-md px-4'
+  const band = <EventBand size="compact">{event?.name}</EventBand>
 
-  if (!event || !chilis) return <main className={`${shell} flex-1 pt-6`} />
+  if (!event || !chilis)
+    return (
+      <>
+        {band}
+        <main className={`${shell} flex-1 pt-6`} />
+      </>
+    )
   if (!open) {
     const isClosed = phase === 'revealed' || (closed && phase === 'voting')
     const time = event.revealAt
       ? new Date(event.revealAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
       : ''
     return (
-      <main className={`${shell} flex-1 pt-6`}>
-        <h1 className="text-[28px] font-semibold leading-tight">Your top 3</h1>
-        <p className="mt-4">{isClosed ? `Voting is closed. Results at ${time}.` : 'Voting opens when the host starts it.'}</p>
-        <Link href="/" className="flex min-h-12 items-center text-enamel underline">
-          Back to all chilis
-        </Link>
-      </main>
+      <>
+        {band}
+        <main className={`${shell} flex-1 pt-6`}>
+          <h1 className="text-[28px] font-semibold leading-tight">Your top 3</h1>
+          <p className="mt-4">{isClosed ? `Voting is closed. Results at ${time}.` : 'Voting opens when the host starts it.'}</p>
+          <Link href="/" className="flex min-h-12 items-center text-enamel underline">
+            Back to all chilis
+          </Link>
+        </main>
+      </>
     )
   }
 
   const name = (id: string | null) => chilis.find((c) => c.id === id)?.name ?? ''
   return (
     <>
+      {band}
       <main className={`${shell} flex-1 pt-6`}>
         <h1 className="text-[28px] font-semibold leading-tight">Your top 3</h1>
-        <ul className="mt-4">
+        <ul className="mt-2">
           {chilis.map((c) => (
-            <li key={c.id} className="flex min-h-[72px] items-center gap-3 border-b border-rule py-2">
-              <div className="w-[72px] shrink-0">
-                <PotNumber n={c.potNumber} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[22px] font-semibold">{c.name}</p>
-                <div className="mt-1 flex">
+            <li key={c.id} className="grid min-h-[72px] grid-cols-[72px_1fr] items-center gap-3.5 border-b border-rule py-3.5">
+              <PotNumber n={c.potNumber} />
+              <div className="min-w-0">
+                <p className="truncate text-[22px] font-semibold leading-tight">{c.name}</p>
+                <div className="mt-2 flex divide-x-2 divide-enamel overflow-hidden rounded-[10px] border-2 border-enamel">
                   {RANKS.map((label, i) => {
                     const pressed = live[i] === c.id
                     return (
@@ -117,8 +128,8 @@ export function Ballot() {
                           setConfirmed(false)
                           setPicks(setPick(live, i as 0 | 1 | 2, c.id))
                         }}
-                        className={`min-h-12 min-w-12 flex-1 border border-enamel first:rounded-l-md last:rounded-r-md ${
-                          pressed ? 'bg-enamel text-plate' : 'bg-plate text-ink'
+                        className={`min-h-12 min-w-12 flex-1 text-[18px] font-semibold ${
+                          pressed ? 'bg-enamel text-plate' : 'bg-plate text-enamel'
                         }`}
                       >
                         {label}
@@ -131,8 +142,8 @@ export function Ballot() {
           ))}
         </ul>
       </main>
-      <div className="sticky bottom-0 border-t border-rule bg-plate pb-[env(safe-area-inset-bottom)]">
-        <div className={`${shell} py-2`}>
+      <div className={actionBar}>
+        <div className={`${shell} pt-3 pb-4`}>
           <ol className="text-[18px]">
             {RANKS.map((label, i) => (
               <li key={label} className="flex gap-2">
@@ -161,7 +172,7 @@ export function Ballot() {
             type="button"
             onClick={save}
             disabled={!isComplete(live) || saving}
-            className="mt-2 min-h-12 w-full rounded-md bg-enamel px-4 text-plate disabled:opacity-60"
+            className={`mt-3 w-full ${primaryBtn}`}
           >
             {saving ? 'Saving…' : hasBallot ? 'Update my picks' : 'Save my picks'}
           </button>

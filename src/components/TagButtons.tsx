@@ -77,8 +77,8 @@ export function TagButtons({
             aria-pressed={pressed}
             disabled={!enabled || busy}
             onClick={() => toggle(t.id)}
-            className={`min-h-12 rounded-full border px-4 text-[18px] ${
-              pressed ? 'border-enamel bg-enamel text-plate' : 'border-rule text-ink'
+            className={`min-h-12 rounded-full px-4 text-[18px] ${
+              pressed ? 'bg-enamel text-plate' : 'bg-[#EEF2FA] text-ink'
             } ${busy ? 'opacity-60' : ''} disabled:cursor-not-allowed`}
           >
             {pressed && <span aria-hidden="true">✓ </span>}

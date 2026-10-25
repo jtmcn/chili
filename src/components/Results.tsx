@@ -2,6 +2,7 @@ import { ordinal } from '@/lib/rank'
 import type { ResultRow } from '@/lib/types'
 import { PotNumber } from './PotNumber'
 import { Ribbon } from './Ribbon'
+import { TagPills } from './TagPills'
 
 export function Results({
   rows,
@@ -17,25 +18,21 @@ export function Results({
         const text = `${tied ? 'T-' : ''}${ordinal(r.rank)}`
         const tags = topTags(r.chiliId)
         return (
-          <li key={r.chiliId} className="flex min-h-[72px] items-start gap-3 py-3">
-            <span className="flex w-[72px] shrink-0 justify-center">
-              <PotNumber n={r.potNumber} size="row" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[22px] font-semibold leading-tight">{r.name}</span>
+          <li key={r.chiliId} className="grid min-h-[72px] grid-cols-[72px_1fr_auto] items-start gap-3.5 py-3.5">
+            <PotNumber n={r.potNumber} size="row" />
+            <span className="min-w-0">
+              <span className="mt-0.5 block text-[22px] font-semibold leading-tight">{r.name}</span>
               <span className="block">{r.cook ? `Cook: ${r.cook}` : null}</span>
               <span className="block">
                 {r.points === 1 ? '1 point' : `${r.points} points`} · {r.firsts === 1 ? '1 first' : `${r.firsts} firsts`}
               </span>
-              {tags.length > 0 && (
-                <span className="mt-1 flex flex-wrap gap-x-3">
-                  {tags.map((t) => (
-                    <span key={t.label}>{`${t.label} ${t.count}`}</span>
-                  ))}
-                </span>
-              )}
+              <TagPills tags={tags} />
             </span>
-            {r.rank <= 3 ? <Ribbon rank={r.rank as 1 | 2 | 3} label={text} /> : <span className="font-semibold">{text}</span>}
+            {r.rank <= 3 ? (
+              <Ribbon rank={r.rank as 1 | 2 | 3} label={text} />
+            ) : (
+              <span className="flex w-14 justify-center pt-4 font-semibold">{text}</span>
+            )}
           </li>
         )
       })}

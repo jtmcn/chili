@@ -6,7 +6,7 @@ export function AllergenBadges({ ids, allergens }: { ids: string[]; allergens: R
   return (
     <ul className="mt-1 flex flex-wrap gap-1.5">
       {labels.map((l) => (
-        <li key={l} className="rounded-full border border-rule px-2.5 py-0.5 text-[18px] text-ink">
+        <li key={l} className="rounded-full border-[1.5px] border-rule px-2.5 py-px text-[16px] text-ink">
           {l}
         </li>
       ))}

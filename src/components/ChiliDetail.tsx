@@ -29,19 +29,19 @@ export function ChiliDetail({
       >
         Back to all chilis
       </Link>
-      <div className="mt-2">
+      <div className="mt-3 flex items-center gap-4">
         <PotNumber n={chili.potNumber} size="detail" />
+        <h1 className="min-w-0 text-[28px] font-semibold leading-tight">
+          {chili.name}
+        </h1>
       </div>
-      <h1 className="mt-3 text-[28px] font-semibold leading-tight">
-        {chili.name}
-      </h1>
       {chili.photoPath && (
         // eslint-disable-next-line @next/next/no-img-element -- avoid image optimizer cost
         <img
           src={photoUrl(chili.photoPath)}
           alt={`Photo of ${chili.name}`}
           loading="lazy"
-          className="mt-3 aspect-[4/3] w-full rounded object-cover"
+          className="mt-4 aspect-[4/3] w-full rounded-[10px] object-cover"
         />
       )}
       {chili.description && (

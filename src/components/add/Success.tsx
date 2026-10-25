@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { PotNumber } from '@/components/PotNumber'
+import { secondaryBtn as secondary } from '@/components/buttons'
 import { getDeviceId } from '@/lib/device-id'
 import { resizeToJpeg, uploadPhoto } from '@/lib/photo'
 
-const secondary = 'flex min-h-12 items-center rounded border border-enamel px-5 text-[18px] font-semibold text-enamel'
 
 type PhotoState =
   | { kind: 'idle' }
@@ -40,11 +40,11 @@ export function Success({ potNumber, chiliId }: { potNumber: number; chiliId: st
   return (
     <div className="flex flex-col items-start gap-4">
       <PotNumber n={potNumber} size="hero" />
-      <p className="text-[28px] font-semibold leading-tight">Write this on your table card</p>
+      <p className="text-[22px] font-semibold leading-tight">Write this on your table card</p>
       {photo.kind === 'done' ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element -- avoid image optimizer cost */}
-          <img src={photo.url} alt="Your chili photo" className="aspect-[4/3] w-full rounded object-cover" />
+          <img src={photo.url} alt="Your chili photo" className="aspect-[4/3] w-full rounded-[10px] object-cover" />
           <p>Photo added</p>
         </>
       ) : (

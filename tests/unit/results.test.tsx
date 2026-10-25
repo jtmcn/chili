@@ -18,7 +18,7 @@ describe('Results', () => {
     expect(within(screen.getByTestId('ribbon-1')).getByText('1st')).toBeInTheDocument()
     expect(within(screen.getByTestId('ribbon-2')).getByText('2nd')).toBeInTheDocument()
     expect(screen.getByText(/Sam/)).toBeInTheDocument()
-    expect(screen.getByText('Smoky 4')).toBeInTheDocument()
+    expect(screen.getByText('Smoky')).toHaveTextContent('Smoky 4')
   })
 
   it('labels ties with T- and gives tied top-3 ranks ribbons', () => {

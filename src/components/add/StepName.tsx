@@ -21,7 +21,7 @@ export function StepName({
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? 'name-error' : undefined}
           onChange={(e) => onChange('name', e.target.value)}
-          className="min-h-12 rounded border border-ink px-3"
+          className="min-h-[52px] rounded-[10px] border-2 border-ink px-3"
         />
       </label>
       {error && (
@@ -36,7 +36,7 @@ export function StepName({
           maxLength={40}
           autoComplete="off"
           onChange={(e) => onChange('cook', e.target.value)}
-          className="min-h-12 rounded border border-ink px-3"
+          className="min-h-[52px] rounded-[10px] border-2 border-ink px-3"
         />
       </label>
     </div>

@@ -11,8 +11,8 @@ import { StepDescription } from './StepDescription'
 import { StepName } from './StepName'
 import { StepReview } from './StepReview'
 import { Success } from './Success'
+import { primaryBtn, secondaryBtn } from '@/components/buttons'
 
-const btn = 'min-h-12 rounded px-5 text-[18px] font-semibold disabled:opacity-60'
 
 export function Wizard() {
   const [s, dispatch] = useReducer(wizardReducer, initialWizard)
@@ -104,9 +104,9 @@ export function Wizard() {
           </>
         )}
       </div>
-      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-rule bg-plate px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-rule bg-plate px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {s.step > 1 && (
-          <button type="button" onClick={() => nav({ type: 'back' })} className={`${btn} border border-ink`}>
+          <button type="button" onClick={() => nav({ type: 'back' })} className={secondaryBtn}>
             Back
           </button>
         )}
@@ -115,12 +115,12 @@ export function Wizard() {
             type="button"
             disabled={blocked}
             onClick={() => nav({ type: 'next' })}
-            className={`${btn} flex-1 bg-enamel text-plate`}
+            className={`${primaryBtn} flex-1`}
           >
             {skippable ? 'Skip' : 'Next'}
           </button>
         ) : (
-          <button type="button" disabled={pending} onClick={submit} className={`${btn} flex-1 bg-enamel text-plate`}>
+          <button type="button" disabled={pending} onClick={submit} className={`${primaryBtn} flex-1`}>
             {pending ? 'Adding…' : 'Add my chili'}
           </button>
         )}
