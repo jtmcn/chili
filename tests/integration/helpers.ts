@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
-function db() {
+export function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   if (!/localhost|127\.0\.0\.1/.test(url)) throw new Error(`Refusing to touch non-local DB: ${url}`)
   return createClient<Database>(url, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })

@@ -169,7 +169,16 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "ballot_count":
+            "admin_delete_chili":
+{ Args: { "p_chili_id": string }; Returns: undefined
+                           },
+"admin_reveal_now":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"admin_update_chili":
+{ Args: { "p_allergens": (string)[],"p_chili_id": string,"p_cook": string,"p_description": string,"p_name": string,"p_pot_number": number }; Returns: undefined
+                           },
+"ballot_count":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "create_chili":
@@ -197,6 +206,12 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "chili_id": string,"count": number,"tag_id": string
             }[]
+                           },
+"set_tag":
+{ Args: { "p_chili_id": string,"p_device_id": string,"p_on": boolean,"p_tag_id": string }; Returns: undefined
+                           },
+"submit_ballot":
+{ Args: { "p_device_id": string,"p_first": string,"p_second": string,"p_third": string }; Returns: undefined
                            },
 "voting_open":
 { Args: Record<PropertyKey, never>; Returns: boolean

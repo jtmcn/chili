@@ -37,3 +37,7 @@ export function fromDbError(e: PostgrestError): Response {
   if (e.code === '23514' || e.code === '23503') return fail('invalid', 400)
   return fail('server_error', 500)
 }
+
+export function isPotTaken(e: PostgrestError): boolean {
+  return e.code === '23505' && `${e.message} ${e.details ?? ''}`.includes('pot_number')
+}

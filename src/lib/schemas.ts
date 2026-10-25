@@ -7,7 +7,7 @@ export const ALLERGEN_IDS = [
 
 export const chiliInput = z
   .object({
-    deviceId: z.string().min(1),
+    deviceId: z.string().min(1).max(100),
     name: z.string().trim().min(2).max(40),
     cook: z.string().trim().max(40).optional(),
     description: z.string().trim().max(200).optional(),
@@ -19,3 +19,60 @@ export const chiliInput = z
   })
 
 export type ChiliInput = z.infer<typeof chiliInput>
+
+export const TAG_IDS = [
+  'spicy', 'mild', 'smoky', 'meaty', 'veggie',
+  'beany', 'sweet', 'tangy', 'rich', 'unique',
+] as const
+
+export const tagInput = z.object({
+  chiliId: z.uuid(),
+  tagId: z.enum(TAG_IDS),
+  deviceId: z.string().min(1).max(100),
+  on: z.boolean(),
+})
+
+export const ballotInput = z.object({
+  deviceId: z.string().min(1).max(100),
+  picks: z
+    .array(z.uuid())
+    .length(3)
+    .refine((p) => new Set(p).size === p.length, { message: 'Picks must be distinct' }),
+})
+
+export const ballotMineInput = z.object({ deviceId: z.string().min(1).max(100) })
+
+const adminFields = {
+  name: z.string().trim().min(2).max(40),
+  cook: z.string().trim().max(40),
+  description: z.string().trim().max(200),
+  allergens: z.array(z.enum(ALLERGEN_IDS)),
+}
+
+export const adminChiliInput = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('create'),
+    name: adminFields.name,
+    cook: adminFields.cook.optional(),
+    description: adminFields.description.optional(),
+    allergens: adminFields.allergens.optional(),
+    potNumber: z.number().int().positive().nullish(),
+  }),
+  z.object({
+    action: z.literal('update'),
+    chiliId: z.uuid(),
+    name: adminFields.name.optional(),
+    cook: adminFields.cook.optional(),
+    description: adminFields.description.optional(),
+    allergens: adminFields.allergens.optional(),
+    potNumber: z.number().int().positive().nullish(),
+  }),
+  z.object({ action: z.literal('delete'), chiliId: z.uuid() }),
+])
+
+export const adminEventInput = z.object({
+  status: z.enum(['setup', 'voting']).optional(),
+  entriesOpen: z.boolean().optional(),
+  revealAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  revealNow: z.literal(true).optional(),
+})

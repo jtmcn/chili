@@ -1,30 +1,53 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import { ChiliDetail } from '@/components/ChiliDetail'
-import { fetchChili } from '@/lib/chilis'
-import { useLive } from '@/lib/live'
-import { fetchAllergens } from '@/lib/reference'
+import Link from "next/link";
+import { useMemo } from "react";
+import { useParams } from "next/navigation";
+import { ChiliDetail } from "@/components/ChiliDetail";
+import { fetchChili } from "@/lib/chilis";
+import { useLive } from "@/lib/live";
+import { currentPhase, fetchEvent, offsetFrom } from "@/lib/event";
+import { useRevealRedirect } from "@/lib/use-reveal-redirect";
+import { fetchAllergens, fetchTags } from "@/lib/reference";
+import { fetchTagCounts } from "@/lib/tags";
 
 export function ChiliView() {
-  const { id } = useParams<{ id: string }>()
-  const { data: chili } = useLive(['chilis'], () => fetchChili(id))
-  const { data: allergens } = useLive([], fetchAllergens, 86_400_000)
+  const { id } = useParams<{ id: string }>();
+  const { data: chili } = useLive(["chilis"], () => fetchChili(id));
+  const { data: allergens } = useLive([], fetchAllergens, 86_400_000);
+  const { data: tags } = useLive([], fetchTags, 86_400_000);
+  const { data: tagCounts, refresh } = useLive(["chili_tags"], fetchTagCounts);
+  const { data: event } = useLive(["event"], fetchEvent);
+  const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event]);
+  useRevealRedirect(event, offsetMs);
+  // Mirrors the server's voting_open(), which also requires reveal_at.
+  const tagsEnabled =
+    !!event?.revealAt &&
+    currentPhase(event, Date.parse(event.serverNow)) === "voting";
   return (
     <main className="mx-auto w-full max-w-md flex-1 px-4 py-6">
       {chili ? (
-        <ChiliDetail chili={chili} allergens={allergens ?? []} />
+        <ChiliDetail
+          chili={chili}
+          allergens={allergens ?? []}
+          tags={tags}
+          tagCounts={tagCounts}
+          tagsEnabled={tagsEnabled}
+          onTagChanged={refresh}
+        />
       ) : (
         chili === null && (
           <>
             <p className="text-[18px]">Chili not found.</p>
-            <Link href="/" className="flex min-h-12 items-center text-enamel underline">
+            <Link
+              href="/"
+              className="flex min-h-12 items-center text-enamel underline"
+            >
               Back to all chilis
             </Link>
           </>
         )
       )}
     </main>
-  )
+  );
 }
