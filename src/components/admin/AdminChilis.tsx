@@ -89,7 +89,7 @@ export function AdminChilis({
     name: d.name,
     cook: d.cook,
     description: d.description,
-    potNumber: Number(d.potNumber),
+    potNumber: d.potNumber ? Number(d.potNumber) : null,
     allergens: d.allergens,
   })
 

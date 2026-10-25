@@ -56,6 +56,7 @@ export const adminChiliInput = z.discriminatedUnion('action', [
     cook: adminFields.cook.optional(),
     description: adminFields.description.optional(),
     allergens: adminFields.allergens.optional(),
+    potNumber: z.number().int().positive().nullish(),
   }),
   z.object({
     action: z.literal('update'),

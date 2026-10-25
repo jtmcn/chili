@@ -46,6 +46,16 @@ describe('admin chili', () => {
     expect(r.status).toBe(409)
     expect(r.json).toMatchObject({ error: 'pot_taken' })
   })
+  it('create with potNumber assigns it', async () => {
+    const r = await call(CHILI, { action: 'create', name: 'TEST Admin A', potNumber: 42 }, H)
+    expect(r.json.potNumber).toBe(42)
+    expect((await svc().from('chilis').select('pot_number').eq('name', 'TEST Admin A').single()).data!.pot_number).toBe(42)
+  })
+  it('update with null potNumber leaves it unchanged', async () => {
+    const pot = (await create('TEST Admin A')).json.potNumber
+    await call(CHILI, { action: 'update', chiliId: await idOf('TEST Admin A'), cook: 'Pat', potNumber: null }, H)
+    expect((await svc().from('chilis').select('pot_number').eq('name', 'TEST Admin A').single()).data!.pot_number).toBe(pot)
+  })
   it('update changes fields and replaces allergens', async () => {
     await call(CHILI, { action: 'create', name: 'TEST Admin A', allergens: ['milk'] }, H)
     const id = await idOf('TEST Admin A')

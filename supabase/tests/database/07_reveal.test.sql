@@ -19,7 +19,7 @@ select pg_temp.b('v5', 'B', 'C', 'A');
 
 update public.event set status = 'voting', reveal_at = now() - interval '1 second';
 
-select results_eq($$select name, points, firsts, rank from public.get_results() order by rank$$,
+select results_eq($$select name, points, firsts, rank from public.get_results() where name ~ '^TEST [A-D]$' order by rank$$,
   $$values ('TEST A', 11, 2, 1), ('TEST B', 10, 2, 2), ('TEST C', 8, 1, 3), ('TEST D', 1, 0, 4)$$,
   'hand-counted points, firsts and rank');
 

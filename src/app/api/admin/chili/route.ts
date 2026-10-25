@@ -23,7 +23,19 @@ export async function POST(req: Request): Promise<Response> {
       p_as_admin: true,
     })
     if (error) return fromDbError(error)
-    return ok({ potNumber: data }, 201)
+    let pot = data
+    if (v.potNumber && v.potNumber !== data) {
+      // chili already exists if this fails (e.g. pot taken); the error is surfaced
+      const moved = await db.rpc('admin_update_chili', {
+        p_chili_id: (await db.from('chilis').select('id').eq('pot_number', data).single()).data!.id,
+        p_name: null as unknown as string, p_cook: null as unknown as string,
+        p_description: null as unknown as string, p_allergens: null as unknown as string[],
+        p_pot_number: v.potNumber,
+      })
+      if (moved.error) return fromDbError(moved.error)
+      pot = v.potNumber
+    }
+    return ok({ potNumber: pot }, 201)
   }
   if (v.action === 'update') {
     const { error } = await db.rpc('admin_update_chili', {
