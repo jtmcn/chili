@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship the whole chili cookoff app (issues #1–#8, #10) as one linear `gh stack` of nine PRs, with CI green on every layer and a production deploy after layer 3.
+**Goal:** Ship the whole chili cookoff app (issues #1–#8, #10) as one linear `gh stack` of three PRs (nine layers of tasks), with CI green on every PR and a production deploy after PR A.
 
 **Architecture:** Next.js App Router on Vercel. Phones read public data straight from Supabase with the anon key. Every write goes through a Next.js route handler that validates with zod and calls a `security definer` Postgres function, using the service-role key. The rules (event state, ownership, limits) live in those functions, so the database enforces them. Live updates use Supabase Realtime **Broadcast from Database**: triggers send a bare `{table}` ping and clients refetch. A 10 s poll is the fallback.
 
-**Tech Stack:** Next.js (App Router, TypeScript, Tailwind), `@supabase/supabase-js`, zod, `qrcode`, Vitest + Testing Library (jsdom), pgTAP via `supabase test db`, Supabase CLI, GitHub Actions, Vercel Git integration, `gh stack`.
+**Tech Stack:** Next.js (App Router, TypeScript, Tailwind), `@supabase/supabase-js`, zod, `qrcode`, Vitest + Testing Library (jsdom), pgTAP via `supabase test db` (local only), Supabase CLI, GitHub Actions (app checks only), Vercel Git integration, `gh stack`.
 
 **Spec:** `docs/prd.md`. Tickets: GitHub issues #1–#10 on `jtmcn/chili` (#9 is the human acceptance pass and is not part of the stack).
 
@@ -32,13 +32,16 @@
     - After voting closes: "Voting is closed. Results at {time}."
 - Live: changes visible on other phones within 2 s; reveal switch within 5 s; poll every 10 s.
 - Git: branches `joel/<desc>` (< 50 chars); plain imperative commit messages; **no co-author trailers**; terse 1–2 line code comments.
-- CI runs on `pull_request` for **every** base branch (stacked PRs target each other, not `main`).
+- CI runs on `pull_request` for **every** base branch (stacked PRs target each other, not `main`). CI runs only the app checks (lint, typecheck, unit, build). pgTAP and integration tests run locally against `npx supabase start` before each push; Docker is already running.
+- Migrations reach prod via `npx supabase db push --db-url "$SUPABASE_DB_URL"` from the laptop, run **just before** merging the PR that adds them (Joel puts the Session pooler URL in `.env.local`; never commit it). Migrations are additive only, so the live app keeps working against the newer schema. No CI deploy job.
+- Test split: pgTAP owns every rule the database enforces (event state, ownership, limits, privileges, scoring). Integration tests cover only what the route adds: zod validation, `fromDbError` status mapping and admin auth. Don't re-test a DB rule at the HTTP level.
 - Function privileges: Postgres grants `EXECUTE` to `PUBLIC` on every new function, and Supabase also grants it to `anon`/`authenticated`. Every write function (`create_chili`, `set_tag`, `submit_ballot`, `admin_*`, `update_chili`) ends with `revoke execute on function … from public, anon, authenticated; grant execute on function … to service_role;`, and its layer's pgTAP file asserts that calling it as `anon` throws `42501`.
 - Every `security definer` function sets `set search_path = ''` and schema-qualifies names (`public.chilis`), so `get_advisors` stays clean.
 - Anon reads public chili and tag data only through `security definer` functions (`get_chilis()`, `get_tag_counts()`), not views. A view over RLS-hidden tables trips Supabase's `security_definer_view` lint.
 - After the first merge checkpoint, real cooks are using the prod database, which previews share. From then on, **never write from a preview**. Do manual testing against local Supabase only. Never change event state on prod outside the admin page on the event day.
 - Test rows use device IDs prefixed `test-` and chili names prefixed `TEST `, so cleanup can target them without touching real entries.
-- Local tooling: the Supabase CLI is a pinned npm dev dependency (`npx supabase …`); there's no global install. Node 24 (`.nvmrc`) to match Vercel and CI.
+- Local tooling: the Supabase CLI is a pinned npm dev dependency (`npx supabase …`); there's no global install. Node 24 (`.nvmrc`) to match Vercel and CI; the laptop defaults to Node 26, so `nvm use` before `npm install`.
+- DB types are generated, not hand-written: `npx supabase gen types typescript --local > src/lib/database.types.ts` after each migration, and both clients are typed `SupabaseClient<Database>`. `types.ts` keeps only the camelCase domain types.
 
 ## Review Focus
 
@@ -111,50 +114,47 @@ Phones are used outdoors in sunlight, one-handed, by tasters walking between tab
 ## Stack layout
 
 ```
-(main) <- joel/chili-scaffold <- joel/chili-add-walkthrough <- joel/chili-list
-       <- joel/chili-tags <- joel/chili-ballot <- joel/chili-admin
-       <- joel/chili-reveal <- joel/chili-cook-edit <- joel/chili-tag-moderation
+(main) <- joel/chili-foundation <- joel/chili-core <- joel/chili-extras
 ```
 
-| Layer | Branch | Closes | Budget |
-|---|---|---|---|
-| 1 | `joel/chili-scaffold` | #1 | 15 min (+ human setup) |
-| 2 | `joel/chili-add-walkthrough` | #2 | 30 min |
-| 3 | `joel/chili-list` | #3 | 30 min → **merge checkpoint: L1–L3 to prod** |
-| 4 | `joel/chili-tags` | #5 | 15 min |
-| 5 | `joel/chili-ballot` | #6 | 25 min |
-| 6 | `joel/chili-admin` | #7 | 20 min |
-| 7 | `joel/chili-reveal` | #8 | 15 min → **cut line: everything above is optional** |
-| 8 | `joel/chili-cook-edit` | #4 | 10 min |
-| 9 | `joel/chili-tag-moderation` | #10 | 10 min |
+| PR | Branch | Layers | Closes | Budget |
+|---|---|---|---|---|
+| A | `joel/chili-foundation` | 1 scaffold, 2 walkthrough, 3 list | #1, #2, #3 | 75 min → **merge checkpoint: to prod, share with cooks** |
+| B | `joel/chili-core` | 4 tags, 5 ballot, 6 admin, 7 reveal | #5, #6, #7, #8 | 75 min → **cut line: PR C is optional** |
+| C | `joel/chili-extras` | 8 cook edit, 9 tag moderation | #4, #10 | 20 min |
 
-The cut-list tickets (#4, #10) sit at the top, so dropping them means not merging the top PRs; no restructuring is needed.
+Layers stay as task groups with one commit per task; only the PR boundaries changed. Dropping the cut-list tickets (#4, #10) means not merging PR C.
 
-**Schedule reality:** the budgets add up to 170 min (plus about 15 min of visual design, spread over L1, L3 and L7), more than the PRD's 150-min target, and that's before CI. The `db` job takes a few minutes per run, and every `rebase --upstack` re-runs CI on every PR above it. Treat the Layer 7 cut line as the likely finish, and tell Joel early if Layer 5 runs over.
+**Schedule reality:** about 170 min of tasks plus about 15 min of visual design (spread over L1, L3 and L7), against the PRD's 150-min target. Three PRs and app-only CI keep the CI overhead to a few short runs. Treat the PR B cut line as the likely finish, and tell Joel early if Layer 5 runs over.
 
 ### Per-layer loop (applies to every layer)
 
-- [ ] Create the branch. Layer 1: `gh stack init joel/chili-scaffold`. After that: `gh stack add <branch>` from the top of the stack.
 - [ ] Do the layer's tasks (TDD, commit per task with `git add <paths>`, never `-A`).
-- [ ] Run `npm run lint && npm run typecheck && npm test && npm run build` (plus `npx supabase test db && npm run test:integration` once those exist). Everything passes. In the `next build` output, check that the first-load JS for `/` is still well under 200 KB.
-- [ ] `gh stack submit --auto`, then `gh pr edit <n> --body-file <tmp>` with a body that starts `Closes #<issue>` (use the `mattpocock-skills:pr` skill for the body).
-- [ ] `gh pr checks <n> --watch` until green. Fix on this layer's branch, then `gh stack rebase --upstack`.
-- [ ] A fix belonging to a lower layer: `gh stack checkout <branch>`, commit there, `gh stack rebase --upstack`, `gh stack top`, `gh stack push`.
+- [ ] Run `npm run lint && npm run typecheck && npm test && npm run build`, plus `npx supabase test db && npm run test:integration` once those exist. Everything passes. In the `next build` output, check that the first-load JS for `/` is still well under 200 KB.
+- [ ] Push the branch (`gh stack push`) so a preview builds, but don't wait on CI between layers.
+
+### Per-PR loop
+
+- [ ] Create the branch at the PR's first layer. PR A: `gh stack init joel/chili-foundation`. After that: `gh stack add <branch>` from the top of the stack.
+- [ ] At the PR's last layer: `gh stack submit --auto`, then `gh pr edit <n> --body-file <tmp>` with a body that starts with one `Closes #<issue>` line per ticket (use the `mattpocock-skills:pr` skill for the body).
+- [ ] `gh pr checks <n> --watch` until green. Fix on this PR's branch, then `gh stack rebase --upstack`.
+- [ ] A fix belonging to a lower PR: `gh stack checkout <branch>`, commit there, `gh stack rebase --upstack`, `gh stack top`, `gh stack push`.
 
 ### Merge checkpoints (ask Joel before each merge)
 
-- **After layer 3 is green:** `gh stack merge <L3 PR#> --yes --squash` merges L1–L3. Vercel deploys `main` right away, but CI's `deploy-db` job only pushes migrations after `check` and `db` finish. Expect a few minutes where the new app runs against the old schema. Watch with `gh run watch` and don't verify until `deploy-db` is green. Then `gh stack sync --prune`. Before sharing the URL with cooks, verify:
-  - `curl -sI https://chili-chi.vercel.app` (logged out) returns `200`, not `401` or a redirect to `vercel.com/login`. If it doesn't, ask Joel to set Deployment Protection to previews only.
-  - Supabase MCP `list_migrations` shows L1–L3 applied, and `get_advisors` (security) reports no RLS, exposure, `security_definer_view` or `function_search_path_mutable` issues.
-  - Ask Joel to confirm that Realtime "Allow public access" is on in the Supabase dashboard (Project Settings → Realtime). Without it, public broadcast pings never arrive and clients fall back to the 10 s poll.
-  - On the prod URL, the home page shows the event name, and an add-a-chili submission named `TEST …` appears on a second device within 2 s. Then delete it from SQL and confirm that `chilis` is empty before the URL goes to cooks.
-  - From here on, previews are read-only (see Global Constraints).
-- **After layer 7 (or 9) is green:** merge the rest the same way. Wait for `deploy-db` (the new routes return 500 until it finishes), then `gh stack sync --prune`. Re-run the `list_migrations` and `get_advisors` checks, then hand off to #9 (human acceptance pass).
+- **After PR A is green:**
+  1. Push the migrations first: `npx supabase db push --db-url "$SUPABASE_DB_URL"`. Then MCP `list_migrations` shows the L1–L3 files, and `get_advisors` (security) reports no RLS, exposure, `security_definer_view` or `function_search_path_mutable` issues.
+  2. `gh stack merge <PR A#> --yes --squash`. Vercel deploys `main`; wait for the production deployment to be `READY`. Then `gh stack sync --prune`.
+  3. Before sharing the URL with cooks, verify:
+     - The production URL (whatever Task 1.0 confirmed) returns `200` to `curl -sI` while logged out, not `401` or a redirect to `vercel.com/login`.
+     - The home page shows the event name, and an add-a-chili submission named `TEST …` appears on a second device within 2 s (proves Realtime public access is on). Then delete it from SQL and confirm that `chilis` is empty before the URL goes to cooks.
+  4. From here on, previews are read-only (see Global Constraints).
+- **After PR B (or C) is green:** `db push` the new migrations, re-check `list_migrations` and `get_advisors`, then merge the same way and `gh stack sync --prune`. Hand off to #9 (human acceptance pass).
 
 ## File structure
 
 ```
-.github/workflows/ci.yml            CI: check, db, deploy-db
+.github/workflows/ci.yml            CI: check (lint, typecheck, unit, build)
 supabase/config.toml                supabase init
 supabase/migrations/
   20261025000100_init.sql           L1: tables, RLS, default privileges, voting_open, get_chilis, get_tag_counts, get_results, ballot_count, get_event, seeds
@@ -165,7 +165,8 @@ supabase/migrations/
   20261025000600_admin.sql          L6: admin_update_chili, admin_delete_chili
   20261025000800_update_chili.sql   L8: update_chili
 supabase/tests/database/*.test.sql  pgTAP, one file per layer
-src/lib/types.ts                    shared client/server types
+src/lib/types.ts                    shared client/server domain types
+src/lib/database.types.ts           generated by `supabase gen types`
 src/lib/supabase/browser.ts         anon client singleton
 src/lib/supabase/server.ts          service-role client (server only)
 src/lib/device-id.ts                getDeviceId
@@ -193,16 +194,23 @@ tests/integration/**                Vitest node, against local Supabase
 
 ---
 
-## Layer 1: `joel/chili-scaffold` (closes #1)
+## Layer 1: scaffold (PR A, closes #1)
 
 ### Task 1.0: Human setup (done, verified 2026-10-25)
 
 - [x] Supabase project `overlook-chili-cook-off` (ref `ivvzfqqkhftoyowanhck`, us-east-1, Postgres 17).
-- [x] GitHub secret `SUPABASE_DB_URL`: the Session pooler connection string. The pooler is needed because runners are IPv4-only.
-- [x] Vercel project `chili` (`prj_ZRZrcv3HsLVs85xuJ0vJefIs8DH9`, team `jtmcn`, Node 24.x). All 5 env vars are set on Production + Preview. `NEXT_PUBLIC_APP_URL=https://chili-chi.vercel.app`.
-- Vercel Standard Protection is on (`all_except_custom_domains`). Previews need a Vercel login, which also keeps outsiders from writing test data through them. The production URL must be public; this is checked at the first merge checkpoint.
-- Previews share the prod database. Before the first merge checkpoint, preview writes are fine, as long as they use `TEST ` names and are cleared at the checkpoint. After it, previews are read-only. Previews of layers whose migrations aren't merged yet will error on the new routes. That's expected.
-- #1's "deployed shell" criterion is met by the Layer 1 preview deploy. The first prod deploy is the Layer 3 checkpoint. Say so in the L1 PR body.
+- [x] GitHub secret `SUPABASE_DB_URL`: the Session pooler connection string. No longer used by CI; kept for reference.
+- [x] Vercel project `chili` (`prj_ZRZrcv3HsLVs85xuJ0vJefIs8DH9`, team `jtmcn`, Node 24.x). All 5 env vars are set on Production + Preview.
+- Previews share the prod database. Before the first merge checkpoint, preview writes are fine, as long as they use `TEST ` names and are cleared at the checkpoint. After it, previews are read-only. Previews of a PR whose migrations aren't pushed yet will error on the new routes. That's expected.
+- #1's "deployed shell" criterion is met by the PR A preview deploy. The first prod deploy is the PR A checkpoint. Say so in the PR A body.
+
+### Task 1.0b: Pre-flight (Joel, before Task 1.1; found 2026-10-25)
+
+- [ ] **Deployment Protection:** Vercel → `chili` → Settings → Deployment Protection → Vercel Authentication → **Only Preview Deployments**. It's currently `all_except_custom_domains`, and the project has no custom domain, so the production `*.vercel.app` URL would need a Vercel login.
+- [ ] **Production URL:** `NEXT_PUBLIC_APP_URL` is `https://chili-chi.vercel.app`, but that domain isn't attached to the project (it returns `DEPLOYMENT_NOT_FOUND`). The project's domains are `chili-jtmcn.vercel.app` and `chili-git-main-jtmcn.vercel.app`. Either add `chili-chi.vercel.app` under Settings → Domains, or set `NEXT_PUBLIC_APP_URL=https://chili-jtmcn.vercel.app` on Production + Preview. The QR code is built from this value.
+- [ ] **Realtime public access:** Supabase → Project Settings → Realtime → "Allow public access" on. Without it, broadcast pings never arrive and clients fall back to the 10 s poll.
+- [ ] **Local DB URL:** add `SUPABASE_DB_URL=<Session pooler URL>` to `.env.local` (gitignored) for `supabase db push` at the checkpoints.
+- [ ] `nvm use 24` (the laptop default is Node 26).
 
 ### Task 1.1: App scaffold, test harness, CI
 
@@ -229,17 +237,15 @@ tests/integration/**                Vitest node, against local Supabase
     type ApiResult<T> = ({ ok: true } & T) | { ok: false; error: string; message: string }
     ```
 
-- [ ] **Step 1: Scaffold.** create-next-app refuses a directory that contains `AGENTS.md` and `.claude/`. Scaffold into the scratchpad instead: `npx create-next-app@latest <scratch>/app --yes --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --skip-install`. Copy its files into the repo root. Don't overwrite `AGENTS.md`, `.gitignore` or `.claude/`; merge `node_modules`/`.next`/`next-env.d.ts` into the existing `.gitignore`. Then run `npm install`. Install `@supabase/supabase-js zod` and dev deps `vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom supabase` (pin the exact `supabase` CLI version; CI uses the same one). In both Vitest configs, alias `server-only` to an empty module. In `vitest.integration.config.ts`, set `fileParallelism: false`, because every file calls `resetDb()` on the same database.
+- [ ] **Step 1: Scaffold.** create-next-app refuses a directory that contains `AGENTS.md` and `.claude/`. Scaffold into the scratchpad instead: `npx create-next-app@latest <scratch>/app --yes --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --skip-install`. Copy its files into the repo root. Don't overwrite `AGENTS.md`, `.gitignore` or `.claude/`; merge `node_modules`/`.next`/`next-env.d.ts` into the existing `.gitignore`. Then run `npm install`. Install `@supabase/supabase-js zod` and dev deps `vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom supabase` (pin the exact `supabase` CLI version). In both Vitest configs, alias `server-only` to an empty module. In `vitest.integration.config.ts`, set `fileParallelism: false`, because every file calls `resetDb()` on the same database.
 - [ ] **Step 2: Write failing tests** in `tests/unit/device-id.test.ts`:
   - `creates and persists a uuid`: two calls return the same value, matching `/^[0-9a-f-]{36}$/`; localStorage and `document.cookie` both contain it.
   - `restores from cookie when localStorage is cleared`: set the cookie `chili_device_id=abc`, clear localStorage → returns `'abc'` and rewrites localStorage.
 - [ ] **Step 3:** `npm test`. Expected: FAIL, `getDeviceId` not defined.
 - [ ] **Step 4:** Implement `getDeviceId`, `browserClient` and `serverClient` (`serverClient` starts with `import 'server-only'`).
 - [ ] **Step 5:** `npm test`. Expected: PASS.
-- [ ] **Step 6: CI.** `ci.yml` triggers on `push: branches: [main]` and `pull_request` (no branch filter). Jobs:
-  - `check`: checkout@v4, setup-node@v4 (node 24 to match Vercel, npm cache), `npm ci`, lint, typecheck, `npm test`, `npm run build`. Set the dummy env `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321` and `NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy`.
-  - `db`: `supabase/setup-cli@v1` with `version:` pinned to the same CLI version as `package.json`, then `supabase start -x studio,imgproxy,inbucket,edge-runtime,logflare,vector,supavisor`, `supabase test db`. Then `supabase status -o env` → `$GITHUB_ENV` mapped to `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`. Run it locally first to confirm the key names the pinned CLI prints, since newer CLIs renamed them. Set `ADMIN_PASSCODE=test-passcode` and run `npm ci && npm run test:integration` (with `--passWithNoTests` until Layer 2).
-  - `deploy-db`: `if: github.event_name == 'push'`, `needs: [check, db]`. Its own `supabase/setup-cli@v1` step (same pinned version), then `supabase db push --db-url "$SUPABASE_DB_URL"` (secret from Task 1.0; no `link` step).
+- [ ] **Step 6: CI.** `ci.yml` triggers on `push: branches: [main]` and `pull_request` (no branch filter). One job, `check`: checkout@v4, setup-node@v4 (node 24 to match Vercel, npm cache), `npm ci`, lint, typecheck, `npm test`, `npm run build`. Set the dummy env `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321` and `NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy`.
+- [ ] **Step 6b: Local DB test env.** Add `.env.test.local` (gitignored) for the integration config, from `npx supabase status -o env` mapped to `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`, plus `ADMIN_PASSCODE=test-passcode`. `vitest.integration.config.ts` loads it with Vite's `loadEnv(mode, process.cwd(), '')` into `test.env`. Check the key names the pinned CLI prints, since newer CLIs renamed them. `test:integration` uses `--passWithNoTests` until Layer 2.
 - [ ] **Step 7: Commit.** `git commit -m "Scaffold Next.js app with Vitest and CI"`
 
 ### Task 1.2: Initial schema and read model
@@ -290,7 +296,7 @@ tests/integration/**                Vitest node, against local Supabase
   - As `postgres`: inserting a ballot with `first_id = second_id` → `throws_ok(..., '23514')`.
   - As `postgres`: create a throwaway function `public._probe()` inside the test, then `function_privs_are('public','_probe',array[]::text[],'anon',array[]::text[])`. This proves the default-privilege revoke covers functions added later.
 - [ ] **Step 2:** `npx supabase start && npx supabase test db`. Expected: FAIL (relations missing).
-- [ ] **Step 3:** Write the migration. `npx supabase db reset && npx supabase test db`. Expected: PASS.
+- [ ] **Step 3:** Write the migration. `npx supabase db reset && npx supabase test db`. Expected: PASS. Then `npx supabase gen types typescript --local > src/lib/database.types.ts` and type both clients with it (repeat after every later migration).
 - [ ] **Step 4: Write failing unit tests** in `tests/unit/event.test.ts`:
   - `currentPhase` is `'revealed'` when `now >= revealAt`, even if status is `'voting'`; it is `'setup'` when `revealAt` is null.
   - `serverNow(offsetFrom({..., serverNow: '2026-10-25T18:00:00Z'}, Date.parse('2026-10-25T18:10:00Z')), Date.parse('2026-10-25T18:10:00Z'))` === `Date.parse('2026-10-25T18:00:00Z')`. This covers a phone 10 minutes fast.
@@ -310,17 +316,17 @@ tests/integration/**                Vitest node, against local Supabase
 - [ ] **Step 1: Write failing test:** `PotNumber` with `n=7` has the accessible name "Pot 7" and the class `font-pot`.
 - [ ] **Step 2:** Run. Expected: FAIL. Implement, then run again. Expected: PASS. Make the event-name page from Task 1.2 use the tokens, so the preview shows the look.
 - [ ] **Step 3: Commit.** `git commit -m "Add design tokens, fonts and PotNumber"`
-- [ ] **Step 4:** Run the per-layer loop. Before submitting, add a temporary failing test, push, and confirm CI goes red. Then drop the test (#1 acceptance criterion).
+- [ ] **Step 4:** Run the per-layer loop. When PR A is submitted (end of Layer 3), push a temporary failing unit test once, confirm CI goes red, then drop it (#1 acceptance criterion).
 
 ---
 
-## Layer 2: `joel/chili-add-walkthrough` (closes #2)
+## Layer 2: add-a-chili walkthrough (PR A, closes #2)
 
 ### Task 2.1: `create_chili` and `/api/chili`
 
 **Files:**
 - Create: `supabase/migrations/20261025000200_create_chili.sql`, `src/lib/http.ts`, `src/lib/schemas.ts`, `src/app/api/chili/route.ts`, `tests/integration/helpers.ts`
-- Test: `supabase/tests/database/02_create_chili.test.sql`, `tests/integration/chili.test.ts`
+- Test: `supabase/tests/database/02_create_chili.test.sql`, `tests/unit/http.test.ts`, `tests/integration/chili.test.ts`
 
 **Interfaces:**
 - Produces (SQL):
@@ -363,6 +369,7 @@ tests/integration/**                Vitest node, against local Supabase
   - `p_as_admin = true` bypasses both the limit and the closed entries.
   - As `anon`: calling `create_chili(...)` → `throws_ok(..., '42501')`.
 - [ ] **Step 2:** `npx supabase test db`. Expected: FAIL. Write the migration, then run again. Expected: PASS.
+- [ ] **Step 3a: Write failing unit tests** in `tests/unit/http.test.ts`: `fromDbError` maps each raised message (`entries_closed`, `voting_closed`, `not_owner` → 403; `device_limit` → 409), `23505` on `pot_number` → `pot_taken` and otherwise `name_taken`, `23514`/`23503` → 400 `invalid`, and anything else → 500. Later layers rely on this instead of re-testing each 403 over HTTP.
 - [ ] **Step 3: Write failing integration tests** in `chili.test.ts`:
   - A valid body → 201 with `potNumber >= 1`.
   - Neither `allergens` nor `noAllergens` → 400.
@@ -410,7 +417,7 @@ tests/integration/**                Vitest node, against local Supabase
 
 ---
 
-## Layer 3: `joel/chili-list` (closes #3)
+## Layer 3: chili list (PR A, closes #3)
 
 ### Task 3.1: Live updates plumbing
 
@@ -461,11 +468,11 @@ tests/integration/**                Vitest node, against local Supabase
   - `ChiliDetail` shows the description, all allergen labels, the exact disclaimer, and a "Back to all chilis" link to `/`.
 - [ ] **Step 2:** Run. Expected: FAIL. Implement, then run again. Expected: PASS.
 - [ ] **Step 3: Manual check.** In two browser windows against local Supabase, insert a chili via SQL. It appears in the other window in < 2 s.
-- [ ] **Step 4: Commit.** `git commit -m "Add live chili list and detail view"`. Run the per-layer loop, then the **merge checkpoint**.
+- [ ] **Step 4: Commit.** `git commit -m "Add live chili list and detail view"`. Run the per-layer loop, then the per-PR loop for PR A and the **merge checkpoint**.
 
 ---
 
-## Layer 4: `joel/chili-tags` (closes #5)
+## Layer 4: tags (PR B, closes #5)
 
 ### Task 4.1: `set_tag` and `/api/tag`
 
@@ -487,7 +494,7 @@ tests/integration/**                Vitest node, against local Supabase
     - `set_tag(..., false)` → 1.
     - Status `setup` → `throws_ok(..., 'voting_closed')`.
     - As `anon`: calling `set_tag(...)` → `'42501'`.
-  - Integration: on → 200 and the count is 1; off → 0; voting closed → 403 `voting_closed`; an unknown `tagId` → 400.
+  - Integration: on → 200 `{ ok: true }`; an unknown `tagId` → 400. (Counts and `voting_closed` are pgTAP's job.)
 - [ ] **Step 2:** Run. Expected: FAIL. Implement, then run again. Expected: PASS.
 - [ ] **Step 3: Commit.** `git commit -m "Add set_tag and POST /api/tag"`
 
@@ -516,7 +523,7 @@ tests/integration/**                Vitest node, against local Supabase
 
 ---
 
-## Layer 5: `joel/chili-ballot` (closes #6)
+## Layer 5: ballot (PR B, closes #6)
 
 ### Task 5.1: `submit_ballot`, `/api/ballot`, `/api/ballot/mine`
 
@@ -543,7 +550,6 @@ tests/integration/**                Vitest node, against local Supabase
     - 2 picks → 400.
     - A pick naming a deleted chili → 400 `invalid` (not 500, so it isn't retried).
     - Valid → 200.
-    - Resubmit → `ballot_count` still 1.
     - `/mine` returns the latest picks, and `picks: null` for an unknown device.
 - [ ] **Step 2:** Run. Expected: FAIL. Implement, then run again. Expected: PASS.
 - [ ] **Step 3: Commit.** `git commit -m "Add submit_ballot and ballot routes"`
@@ -601,7 +607,7 @@ tests/integration/**                Vitest node, against local Supabase
 
 ---
 
-## Layer 6: `joel/chili-admin` (closes #7)
+## Layer 6: admin (PR B, closes #7)
 
 ### Task 6.1: Admin auth and admin routes
 
@@ -656,13 +662,13 @@ tests/integration/**                Vitest node, against local Supabase
 
 ---
 
-## Layer 7: `joel/chili-reveal` (closes #8)
+## Layer 7: reveal (PR B, closes #8)
 
 ### Task 7.1: Results correctness and hard cutoff
 
 **Files:**
 - Create (only if a test exposes a `get_results` bug): `supabase/migrations/20261025000700_results_fix.sql`. Never edit the init migration; it's on `main` after the first checkpoint.
-- Test: `supabase/tests/database/07_reveal.test.sql`, `tests/integration/reveal.test.ts`
+- Test: `supabase/tests/database/07_reveal.test.sql`
 
 - [ ] **Step 1: Write failing tests:**
   - pgTAP hand count, with chilis A, B, C, D and ballots (A,B,C), (B,A,D), (A,C,B), (C,A,B), (B,C,A), after reveal:
@@ -671,8 +677,8 @@ tests/integration/**                Vitest node, against local Supabase
     - C: points 8, firsts 1, rank 3.
     - D: points 1, rank 4.
   - pgTAP ties, with ballots (P,X,Q), (Y,Q,X): P and Y rank 1 (3 points, 1 first each); Q and X rank 3 (3 points, 0 firsts, 1 second each).
-  - Integration, after `reveal_at = now() - 1s`: `/api/chili`, `/api/tag` and `/api/ballot` all return 403.
-- [ ] **Step 2:** `npx supabase test db && npm run test:integration`. If everything already passes, the tests are the deliverable. Otherwise fix it via a migration until they pass.
+  - pgTAP, after `reveal_at = now() - 1s`: `create_chili`, `set_tag` and `submit_ballot` each throw (`entries_closed` / `voting_closed`). The 403 mapping is already covered by `http.test.ts`.
+- [ ] **Step 2:** `npx supabase test db`. If everything already passes, the tests are the deliverable. Otherwise fix it via a migration until they pass.
 - [ ] **Step 3: Commit.** `git commit -m "Pin scoring, ties and reveal cutoff with tests"`
 
 ### Task 7.2: Results screen and auto-switch
@@ -694,11 +700,11 @@ tests/integration/**                Vitest node, against local Supabase
     - After advancing 3 000 ms, shows `Results` without a reload.
     - A live event refresh moving `revealAt` 60 s later re-arms the timer, so the list is still showing at +3 s (Review Focus 5).
 - [ ] **Step 2:** Run. Expected: FAIL. Implement, then run again. Expected: PASS.
-- [ ] **Step 3: Commit.** `git commit -m "Add results screen with automatic reveal switch"`. Run the per-layer loop. This is the **cut line**: merge L4–L7 now if time is short.
+- [ ] **Step 3: Commit.** `git commit -m "Add results screen with automatic reveal switch"`. Run the per-layer loop, then the per-PR loop for PR B. This is the **cut line**: merge PR B now if time is short.
 
 ---
 
-## Layer 8: `joel/chili-cook-edit` (closes #4)
+## Layer 8: cook edit (PR C, closes #4)
 
 ### Task 8.1: Edit own chili
 
@@ -716,14 +722,14 @@ tests/integration/**                Vitest node, against local Supabase
 
 - [ ] **Step 1: Write failing tests:**
   - pgTAP: another device → `'not_owner'`; after reveal → `'entries_closed'`; the owner can update and the allergens are replaced; as `anon` → `'42501'`.
-  - Integration: `/mine` returns only this device's chilis, cook included; `/update` from another device → 403 `not_owner`.
+  - Integration: `/mine` returns only this device's chilis, cook included; `/update` from the owner → 200.
   - Unit: `fromChili` with `allergenIds: []` → `noAllergens: true`.
 - [ ] **Step 2:** Run. Expected: FAIL. Implement, then run again. Expected: PASS.
 - [ ] **Step 3: Commit.** `git commit -m "Let cooks edit their own chili until reveal"`. Run the per-layer loop.
 
 ---
 
-## Layer 9: `joel/chili-tag-moderation` (closes #10)
+## Layer 9: tag moderation (PR C, closes #10)
 
 ### Task 9.1: Admin tag moderation
 
@@ -743,7 +749,7 @@ tests/integration/**                Vitest node, against local Supabase
   - Without `deviceId`, the count goes to 0.
   - `state.tagActivity` lists the rows.
 - [ ] **Step 2:** Run. Expected: FAIL. Implement (removals stream via the existing `chili_tags` trigger), then run again. Expected: PASS.
-- [ ] **Step 3: Commit.** `git commit -m "Add admin tag moderation"`. Run the per-layer loop, then the final **merge checkpoint**.
+- [ ] **Step 3: Commit.** `git commit -m "Add admin tag moderation"`. Run the per-layer loop, then the per-PR loop for PR C and the final **merge checkpoint**.
 
 ---
 
