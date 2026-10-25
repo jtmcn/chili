@@ -2,3 +2,11 @@
 .env
 .env.*
 node_modules/
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+!.env.example
