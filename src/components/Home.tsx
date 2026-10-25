@@ -8,8 +8,10 @@ import { useLive } from '@/lib/live'
 import { fetchAllergens, fetchTags } from '@/lib/reference'
 import { fetchResults } from '@/lib/results'
 import { fetchTagCounts, topTags } from '@/lib/tags'
+import { actionBar, primaryBtn, secondaryBtn } from './buttons'
 import { ChiliList } from './ChiliList'
 import { Countdown } from './Countdown'
+import { EventBand } from './EventBand'
 import { Results } from './Results'
 import type { RefItem, TagCount } from '@/lib/types'
 
@@ -35,32 +37,39 @@ export function Home() {
   const revealed = phase === 'revealed'
   const voting = !!event?.revealAt && phase === 'voting'
   const canAdd = !!event?.entriesOpen && !revealed
+  const big = 'mt-2.5 font-bold leading-[1.1] tracking-[-0.01em]'
   return (
     <>
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pt-6">
-        <h1 className="text-[28px] font-semibold leading-tight sm:text-[40px]">{event?.name ?? 'Chili Cook-Off'}</h1>
+      <EventBand size="hero">
+        <h1 className="text-[22px] font-semibold leading-tight">{event?.name ?? 'Chili Cook-Off'}</h1>
+        {revealed && <p className={`${big} text-[40px]`}>Results</p>}
         {event && !revealed && (
-          <p className="mt-1">
-            {event.revealAt && 'Results in '}
+          <p className={`${big} tabular-nums ${event.revealAt ? 'text-[40px]' : 'text-[28px]'}`}>
+            {event.revealAt && <span className="sr-only">Results in </span>}
             <Countdown revealAt={event.revealAt} offsetMs={offsetMs} />
+            {event.revealAt && (
+              <span aria-hidden="true" className="block text-[18px] font-normal tracking-normal opacity-90">
+                until results
+              </span>
+            )}
           </p>
         )}
-        {ballots !== undefined && <p>{ballots === 1 ? '1 ballot in' : `${ballots} ballots in`}</p>}
-        <div className="mt-4">
-          {revealed && chilis && <ResultsPanel chiliCount={chilis.length} tags={tags} tagCounts={tagCounts} />}
-          {!revealed && chilis && <ChiliList chilis={chilis} allergens={allergens ?? []} entriesOpen={canAdd} tags={tags} tagCounts={tagCounts} />}
-        </div>
+        {ballots !== undefined && <p className="mt-1.5 opacity-90">{ballots === 1 ? '1 ballot in' : `${ballots} ballots in`}</p>}
+      </EventBand>
+      <main className="mx-auto w-full max-w-md flex-1 px-4">
+        {revealed && chilis && <ResultsPanel chiliCount={chilis.length} tags={tags} tagCounts={tagCounts} />}
+        {!revealed && chilis && <ChiliList chilis={chilis} allergens={allergens ?? []} entriesOpen={canAdd} tags={tags} tagCounts={tagCounts} />}
       </main>
       {(voting || canAdd) && (
-        <div className="sticky bottom-0 border-t border-rule bg-plate pb-[env(safe-area-inset-bottom)]">
-          <div className="mx-auto max-w-md px-4">
+        <div className={actionBar}>
+          <div className="mx-auto grid max-w-md gap-2.5 px-4 pt-3 pb-4">
             {voting && (
-              <Link href="/ballot" className="my-2 flex min-h-12 items-center justify-center rounded bg-enamel font-semibold text-plate">
+              <Link href="/ballot" className={primaryBtn}>
                 Vote for your top 3
               </Link>
             )}
             {canAdd && (
-              <Link href="/add" className="flex min-h-12 items-center text-enamel underline">
+              <Link href="/add" className={voting ? secondaryBtn : primaryBtn}>
                 Bringing a chili? Add it
               </Link>
             )}

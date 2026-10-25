@@ -62,7 +62,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
   if (passcode === null) {
     return (
       <form
-        className="mx-auto max-w-md p-4"
+        className="mx-auto w-full max-w-md p-4"
         onSubmit={(e) => {
           e.preventDefault()
           void check(input)

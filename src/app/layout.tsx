@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${potFont.variable} ${bodyFont.variable} h-full`}>
-      <body className="min-h-full bg-plate font-body text-ink antialiased">{children}</body>
+      <body className="flex min-h-full flex-col bg-plate font-body text-ink antialiased">{children}</body>
     </html>
   );
 }

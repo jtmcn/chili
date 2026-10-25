@@ -40,7 +40,7 @@ export function AdminDashboard() {
   }
   const url = process.env.NEXT_PUBLIC_APP_URL || origin
   return (
-    <main className="mx-auto max-w-md p-4 print:max-w-none print:p-0">
+    <main className="mx-auto w-full max-w-md p-4 print:max-w-none print:p-0">
       <h1 className="event-name text-[28px] font-semibold">{data.event.name}</h1>
       <p className="print:hidden">{data.ballotCount} ballots in</p>
       <div className="print:hidden">

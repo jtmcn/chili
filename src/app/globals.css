@@ -36,6 +36,49 @@ body {
   }
 }
 
+/* Speckled graniteware: sparse, low-opacity flecks keep band text >= 7:1. */
+.enamel {
+  color: var(--color-plate);
+  text-shadow: 0 1px 0 rgba(8, 18, 56, 0.35);
+  background-color: var(--color-enamel);
+  background-image:
+    radial-gradient(circle at 13% 27%, rgba(255, 255, 255, 0.7) 0 1.3px, transparent 1.8px),
+    radial-gradient(circle at 61% 71%, rgba(255, 255, 255, 0.45) 0 0.9px, transparent 1.3px),
+    radial-gradient(circle at 37% 9%, rgba(255, 255, 255, 0.35) 0 0.6px, transparent 1px),
+    radial-gradient(ellipse 2.2px 1.4px at 83% 43%, rgba(255, 255, 255, 0.55) 0 60%, transparent 100%),
+    radial-gradient(circle at 71% 19%, rgba(8, 18, 56, 0.45) 0 1.6px, transparent 2.1px),
+    radial-gradient(circle at 23% 79%, rgba(8, 18, 56, 0.3) 0 1px, transparent 1.4px);
+  background-size: 29px 23px, 19px 31px, 13px 17px, 41px 37px, 53px 43px, 31px 47px;
+  background-position: 0 0, 7px 11px, 3px 5px, 17px 2px, 11px 19px, 23px 7px;
+}
+
+/* Rosette: toothed outer ring (mask) plus two notched tails; colour comes from --fill. */
+.ribbon::before,
+.ribbon::after {
+  content: "";
+  position: absolute;
+  top: 38px;
+  width: 14px;
+  height: 28px;
+  background: var(--fill);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+}
+.ribbon::before {
+  left: 13px;
+  transform: rotate(14deg);
+}
+.ribbon::after {
+  right: 13px;
+  transform: rotate(-14deg);
+}
+.rosette {
+  background: var(--fill);
+  border-radius: 50%;
+  mask:
+    radial-gradient(closest-side, #000 calc(100% - 5px), transparent calc(100% - 5px)),
+    repeating-conic-gradient(#000 0 7.5deg, transparent 7.5deg 15deg);
+}
+
 .ribbon-drop {
   animation: ribbon-drop 300ms ease-out backwards;
 }
