@@ -208,7 +208,7 @@ tests/integration/**                Vitest node, against local Supabase
 
 - [x] **Deployment Protection:** leave it on **Standard Protection**. It protects previews and generated deployment URLs, but not production domains (including the project's `*.vercel.app` production domain), so the share URL is public. Don't pick All Deployments.
 - [ ] **Production URL:** `NEXT_PUBLIC_APP_URL` is `https://chili-chi.vercel.app`, but that domain isn't attached to the project (it returns `DEPLOYMENT_NOT_FOUND`). The project's domains are `chili-jtmcn.vercel.app` and `chili-git-main-jtmcn.vercel.app`. Either add `chili-chi.vercel.app` under Settings → Domains, or set `NEXT_PUBLIC_APP_URL=https://chili-jtmcn.vercel.app` on Production + Preview. The QR code is built from this value.
-- [ ] **Realtime public access:** Supabase → Project Settings → Realtime → "Allow public access" on. Without it, broadcast pings never arrive and clients fall back to the 10 s poll.
+- [ ] **Realtime public access:** Supabase → Realtime (sidebar) → Settings → "Allow public access to channels" on (the default). Without it, broadcast pings never arrive and clients fall back to the 10 s poll.
 - [ ] **Local DB URL:** add `SUPABASE_DB_URL=<Session pooler URL>` to `.env.local` (gitignored) for `supabase db push` at the checkpoints.
 - [ ] `nvm use 24` (the laptop default is Node 26).
 
