@@ -172,6 +172,12 @@ isOneToOne: false
             "ballot_count":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"create_chili":
+{ Args: { "p_allergens": (string)[],"p_as_admin"?: boolean,"p_cook": string,"p_description": string,"p_device_id": string,"p_name": string }; Returns: number
+                           },
+"entries_ok":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "get_chilis":
 { Args: Record<PropertyKey, never>; Returns: {
               "allergen_ids": (string)[],"cook": string,"description": string,"id": string,"name": string,"pot_number": number

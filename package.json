@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run -c vitest.integration.config.ts --passWithNoTests"
+    "test:integration": "vitest run -c vitest.integration.config.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
