@@ -13,7 +13,7 @@ export function StepReview({
 }) {
   const labels = s.allergens.map((id) => allergens.find((a) => a.id === id)?.label ?? id)
   const edit = (step: Step, what: string) => (
-    <button type="button" onClick={() => onEdit(step)} className="min-h-12 text-enamel underline">
+    <button type="button" onClick={() => onEdit(step)} className="min-h-12 min-w-12 text-enamel underline">
       Edit<span className="sr-only"> {what}</span>
     </button>
   )

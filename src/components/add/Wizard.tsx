@@ -18,12 +18,22 @@ export function Wizard() {
   const [s, dispatch] = useReducer(wizardReducer, initialWizard)
   const [allergens, setAllergens] = useState<RefItem[]>([])
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [allergenError, setAllergenError] = useState<string | null>(null)
   const [pot, setPot] = useState<number | null>(null)
 
+  const loadAllergens = () =>
+    fetchAllergens().then(setAllergens, () => setAllergenError("Couldn't load the allergen list."))
   useEffect(() => {
-    fetchAllergens().then(setAllergens, () => setError('Could not load allergens. Reload to try again.'))
+    loadAllergens()
   }, [])
+
+  const nav = (a: Parameters<typeof dispatch>[0]) => {
+    setNameError(null)
+    setSubmitError(null)
+    dispatch(a)
+  }
 
   if (pot !== null) return <Success potNumber={pot} />
 
@@ -32,14 +42,17 @@ export function Wizard() {
     const r = await postJson<{ potNumber: number }>('/api/chili', toPayload(s, getDeviceId()))
     setPending(false)
     if (r.ok) return setPot(r.potNumber)
-    setError(r.message)
-    // Name problems (taken, invalid) are fixed on step 1.
-    dispatch({ type: 'goto', step: r.error === 'network' ? 4 : 1 })
+    // Only name problems are fixed on step 1; the rest stay on the review.
+    if (r.error === 'name_taken' || r.error === 'invalid') {
+      setNameError(r.message)
+      dispatch({ type: 'goto', step: 1 })
+    } else {
+      setSubmitError(r.message)
+    }
   }
 
-  const nameError = s.step === 1 ? error : null
-  const reviewError = s.step === 4 ? error : null
-  const skippable = s.step === 2 && !s.cook && !s.description
+  const skippable = s.step === 2 && !s.description
+  const blocked = !canAdvance(s) || (s.step === 3 && allergens.length === 0)
 
   return (
     <>
@@ -58,7 +71,7 @@ export function Wizard() {
             cook={s.cook}
             error={nameError}
             onChange={(field, value) => {
-              setError(null)
+              setNameError(null)
               dispatch({ type: 'set', field, value })
             }}
           />
@@ -73,26 +86,35 @@ export function Wizard() {
             none={s.noAllergens}
             onToggle={(id) => dispatch({ type: 'toggleAllergen', id })}
             onNone={() => dispatch({ type: 'toggleNone' })}
+            error={allergenError}
+            onRetry={() => {
+              setAllergenError(null)
+              loadAllergens()
+            }}
           />
         )}
         {s.step === 4 && (
           <>
-            <StepReview s={s} allergens={allergens} onEdit={(step) => dispatch({ type: 'goto', step })} />
-            {reviewError && <p className="mt-4 text-chili">{reviewError}</p>}
+            <StepReview s={s} allergens={allergens} onEdit={(step) => nav({ type: 'goto', step })} />
+            {submitError && (
+              <p role="alert" className="mt-4 text-chili">
+                {submitError}
+              </p>
+            )}
           </>
         )}
       </div>
       <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-rule bg-plate px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {s.step > 1 && (
-          <button type="button" onClick={() => dispatch({ type: 'back' })} className={`${btn} border border-ink`}>
+          <button type="button" onClick={() => nav({ type: 'back' })} className={`${btn} border border-ink`}>
             Back
           </button>
         )}
         {s.step < 4 ? (
           <button
             type="button"
-            disabled={!canAdvance(s)}
-            onClick={() => dispatch({ type: 'next' })}
+            disabled={blocked}
+            onClick={() => nav({ type: 'next' })}
             className={`${btn} flex-1 bg-enamel text-plate`}
           >
             {skippable ? 'Skip' : 'Next'}

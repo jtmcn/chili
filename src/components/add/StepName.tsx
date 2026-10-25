@@ -25,7 +25,7 @@ export function StepName({
         />
       </label>
       {error && (
-        <p id="name-error" className="text-chili">
+        <p id="name-error" role="alert" className="text-chili">
           {error}
         </p>
       )}

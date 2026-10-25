@@ -9,16 +9,28 @@ export function StepAllergens({
   none,
   onToggle,
   onNone,
+  error,
+  onRetry,
 }: {
   items: RefItem[]
   selected: string[]
   none: boolean
   onToggle: (id: string) => void
   onNone: () => void
+  error: string | null
+  onRetry: () => void
 }) {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-[28px] font-semibold leading-tight">Does it contain any allergens?</h1>
+      {error && (
+        <div role="alert" className="flex items-center gap-3 text-chili">
+          <p>{error}</p>
+          <button type="button" onClick={onRetry} className="min-h-12 min-w-12 text-enamel underline">
+            Retry
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         {items.map((a) => {
           const on = selected.includes(a.id)
@@ -38,7 +50,7 @@ export function StepAllergens({
         })}
       </div>
       <button type="button" aria-pressed={none} onClick={onNone} className={pill(none)}>
-        {none && '✓ '}No allergens
+        {none && '✓ '}None of these
       </button>
     </div>
   )
