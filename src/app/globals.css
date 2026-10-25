@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-plate: #ffffff;
+  --color-ink: #14213d;
+  --color-enamel: #1d3f8f;
+  --color-rule: #d3dae6;
+  --color-chili: #c21f1f;
+  --color-ribbon-gold: #e8b53b;
+  --font-pot: var(--font-permanent-marker);
+  --font-body: var(--font-atkinson);
+}
+
+body {
+  font-size: 18px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-enamel);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
