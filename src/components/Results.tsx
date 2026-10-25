@@ -25,7 +25,7 @@ export function Results({
               <span className="block text-[22px] font-semibold leading-tight">{r.name}</span>
               <span className="block">{r.cook ? `Cook: ${r.cook}` : null}</span>
               <span className="block">
-                {r.points} points · {r.firsts} firsts
+                {r.points === 1 ? '1 point' : `${r.points} points`} · {r.firsts === 1 ? '1 first' : `${r.firsts} firsts`}
               </span>
               {tags.length > 0 && (
                 <span className="mt-1 flex flex-wrap gap-x-3">

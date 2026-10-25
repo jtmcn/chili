@@ -7,7 +7,7 @@ export const ALLERGEN_IDS = [
 
 export const chiliInput = z
   .object({
-    deviceId: z.string().min(1),
+    deviceId: z.string().min(1).max(100),
     name: z.string().trim().min(2).max(40),
     cook: z.string().trim().max(40).optional(),
     description: z.string().trim().max(200).optional(),
@@ -28,19 +28,19 @@ export const TAG_IDS = [
 export const tagInput = z.object({
   chiliId: z.uuid(),
   tagId: z.enum(TAG_IDS),
-  deviceId: z.string().min(1),
+  deviceId: z.string().min(1).max(100),
   on: z.boolean(),
 })
 
 export const ballotInput = z.object({
-  deviceId: z.string().min(1),
+  deviceId: z.string().min(1).max(100),
   picks: z
     .array(z.uuid())
     .length(3)
     .refine((p) => new Set(p).size === p.length, { message: 'Picks must be distinct' }),
 })
 
-export const ballotMineInput = z.object({ deviceId: z.string().min(1) })
+export const ballotMineInput = z.object({ deviceId: z.string().min(1).max(100) })
 
 const adminFields = {
   name: z.string().trim().min(2).max(40),

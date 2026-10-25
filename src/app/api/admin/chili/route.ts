@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/lib/admin-auth'
-import { fail, fromDbError, ok } from '@/lib/http'
+import { fail, fromDbError, isPotTaken, ok } from '@/lib/http'
 import { adminChiliInput } from '@/lib/schemas'
 import { serverClient } from '@/lib/supabase/server'
 
@@ -13,15 +13,21 @@ export async function POST(req: Request): Promise<Response> {
   const db = serverClient()
 
   if (v.action === 'create') {
-    const { data, error } = await db.rpc('create_chili', {
-      p_device_id: 'admin',
-      p_name: v.name,
-      // nullable text params; generated types omit null
-      p_cook: (v.cook || null) as string,
-      p_description: (v.description || null) as string,
-      p_allergens: v.allergens ?? [],
-      p_as_admin: true,
-    })
+    // Retry sequence collisions with host-assigned pots; each failed insert advances it.
+    let res
+    for (let i = 0; i < 5; i++) {
+      res = await db.rpc('create_chili', {
+        p_device_id: 'admin',
+        p_name: v.name,
+        // nullable text params; generated types omit null
+        p_cook: (v.cook || null) as string,
+        p_description: (v.description || null) as string,
+        p_allergens: v.allergens ?? [],
+        p_as_admin: true,
+      })
+      if (!res.error || !isPotTaken(res.error)) break
+    }
+    const { data, error } = res!
     if (error) return fromDbError(error)
     let pot = data
     if (v.potNumber && v.potNumber !== data) {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { POST } from '@/app/api/chili/route'
-import { call, resetDb, setEvent } from './helpers'
+import { call, db, resetDb, setEvent } from './helpers'
 
 const valid = { deviceId: 'test-dev-1', name: 'TEST Red Hot', allergens: ['milk'] }
 
@@ -38,5 +38,15 @@ describe('POST /api/chili', () => {
     const r = await call(POST, valid)
     expect(r.status).toBe(403)
     expect(r.json.error).toBe('entries_closed')
+  })
+  it('retries when a host-assigned pot collides with the sequence', async () => {
+    const first = await call(POST, valid)
+    // take the next sequence value by hand
+    const next = first.json.potNumber + 1
+    const { error } = await db().from('chilis').update({ pot_number: next }).eq('pot_number', first.json.potNumber)
+    expect(error).toBeNull()
+    const r = await call(POST, { deviceId: 'test-dev-2', name: 'TEST Second', allergens: ['milk'] })
+    expect(r.status).toBe(201)
+    expect(r.json.potNumber).not.toBe(next)
   })
 })
