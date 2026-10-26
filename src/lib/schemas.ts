@@ -89,3 +89,8 @@ export const adminEventInput = z.object({
   revealAt: z.iso.datetime({ offset: true }).nullable().optional(),
   revealNow: z.literal(true).optional(),
 })
+
+export const adminArchiveInput = z.object({
+  year: z.number().int().min(1000).max(9999),
+  heldOn: z.iso.date(),
+})

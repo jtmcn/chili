@@ -5,6 +5,7 @@ import { useLive } from '@/lib/live'
 import { fetchAllergens } from '@/lib/reference'
 import type { EventState, PublicChili, RefItem } from '@/lib/types'
 import { useAdminPost } from './AdminGate'
+import { AdminArchive } from './AdminArchive'
 import { AdminChilis } from './AdminChilis'
 import { AdminEvent } from './AdminEvent'
 import { AdminQr } from './AdminQr'
@@ -13,6 +14,7 @@ interface State {
   event: EventState
   chilis: PublicChili[]
   ballotCount: number
+  archivedYear: number | null
 }
 
 export function AdminDashboard() {
@@ -45,6 +47,7 @@ export function AdminDashboard() {
       <p className="print:hidden">{data.ballotCount} ballots in</p>
       <div className="print:hidden">
         <AdminEvent key={data.event.revealAt ?? 'none'} event={data.event} onChange={refresh} />
+        <AdminArchive key={data.event.revealAt ?? 'none'} event={data.event} archivedYear={data.archivedYear} onChange={refresh} />
         <AdminChilis chilis={data.chilis} allergens={allergens} onChange={refresh} />
       </div>
       {url && <AdminQr url={url} />}

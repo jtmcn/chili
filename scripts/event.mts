@@ -1,6 +1,6 @@
 // Event housekeeping against whichever Supabase project the env points at.
 //   npm run event -- check                                       grants + read-path smoke test
-//   npm run event -- archive [--year N] [--held-on YYYY-MM-DD]   save results and photos to history
+//   archiving is done from /admin (Archive this year)
 //   npm run event -- reset [--name "..."] [--force] --yes        wipe entries, votes, live photos; back to Setup
 import { parseArgs } from 'node:util'
 import { createClient } from '@supabase/supabase-js'
@@ -14,8 +14,6 @@ const { positionals, values } = parseArgs({
     yes: { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
     name: { type: 'string' },
-    year: { type: 'string' },
-    'held-on': { type: 'string' },
   },
 })
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -79,12 +77,12 @@ async function reset(): Promise<boolean> {
   }
   const missing = values.force ? [] : await missingArchivedPhotos()
   if (missing.length) {
-    console.error(`✗ ${missing.length} archived photo(s) missing; re-run archive first (or pass --force).`)
+    console.error(`✗ ${missing.length} archived photo(s) missing; re-check photos under Archive in /admin first (or pass --force).`)
     return false
   }
   const { error } = await db.rpc('reset_event', { ...(values.name && { p_name: values.name }), p_force: values.force })
   if (error?.message === 'not_archived') {
-    console.error('✗ Archive first: npm run event -- archive (or pass --force to discard).')
+    console.error('✗ Archive first from /admin (or pass --force to discard).')
     return false
   }
   if (error) throw error
@@ -116,46 +114,10 @@ async function missingArchivedPhotos(): Promise<string[]> {
   return missing
 }
 
-async function archive(): Promise<boolean> {
-  const ev = await db.from('event').select('reveal_at,archived_year').eq('id', 1).single()
-  if (ev.error) throw ev.error
-  const heldOn = values['held-on'] ?? (ev.data.reveal_at ? new Date(ev.data.reveal_at).toLocaleDateString('en-CA') : '')
-  const year = Number(values.year ?? heldOn.slice(0, 4))
-  if (!Number.isInteger(year) || year < 1000 || year > 9999) {
-    console.error('✗ No reveal time set; pass --year and --held-on.')
-    return false
-  }
-  if (ev.data.archived_year === year) {
-    console.log(`${year} already archived; checking photos`)
-  } else {
-    const { data, error } = await db.rpc('archive_event', { p_year: year, p_held_on: heldOn })
-    if (error) {
-      console.error(`✗ ${error.message}`)
-      return false
-    }
-    console.log(`✓ Archived ${data} chilis as ${year}`)
-  }
-
-  const rows = await db.from('past_chilis').select('photo_path').eq('year', year).not('photo_path', 'is', null)
-  if (rows.error) throw rows.error
-  let ok = true
-  for (const { photo_path: to } of rows.data) {
-    if (await exists(to!)) continue
-    // archived path is "<year>/<live path>"
-    const { error } = await db.storage.from(BUCKET).copy(to!.slice(5), to!)
-    if (error) {
-      console.error(`✗ photo ${to}: ${error.message}`)
-      ok = false
-    }
-  }
-  console.log(ok ? `✓ Photos for ${year} are in place` : '✗ Some photos failed; re-run archive to retry.')
-  return ok
-}
-
-const commands: Record<string, () => Promise<boolean>> = { check, archive, reset }
+const commands: Record<string, () => Promise<boolean>> = { check, reset }
 const run = commands[positionals[0] ?? '']
 if (!run) {
-  console.error('Usage: npm run event -- check | archive [--year N] [--held-on YYYY-MM-DD] | reset [--name "..."] [--force] --yes')
+  console.error('Usage: npm run event -- check | reset [--name "..."] [--force] --yes')
   process.exit(1)
 }
 process.exit((await run()) ? 0 : 1)
