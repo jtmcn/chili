@@ -77,6 +77,11 @@ async function reset(): Promise<boolean> {
     console.log('Nothing changed. Re-run with --yes to wipe all of it.')
     return false
   }
+  const missing = values.force ? [] : await missingArchivedPhotos()
+  if (missing.length) {
+    console.error(`✗ ${missing.length} archived photo(s) missing; re-run archive first (or pass --force).`)
+    return false
+  }
   const { error } = await db.rpc('reset_event', { ...(values.name && { p_name: values.name }), p_force: values.force })
   if (error?.message === 'not_archived') {
     console.error('✗ Archive first: npm run event -- archive (or pass --force to discard).')
@@ -90,6 +95,25 @@ async function reset(): Promise<boolean> {
   }
   console.log('✓ Reset: event is in Setup with entries closed and no reveal time.')
   return check()
+}
+
+async function exists(path: string): Promise<boolean> {
+  const i = path.lastIndexOf('/')
+  const { data, error } = await db.storage.from(BUCKET).list(path.slice(0, i), { search: path.slice(i + 1) })
+  if (error) throw error
+  return data.some((o) => o.name === path.slice(i + 1))
+}
+
+// Archived photo paths for the current event's year that have no stored copy.
+async function missingArchivedPhotos(): Promise<string[]> {
+  const ev = await db.from('event').select('archived_year').eq('id', 1).single()
+  if (ev.error) throw ev.error
+  if (ev.data.archived_year === null) return []
+  const rows = await db.from('past_chilis').select('photo_path').eq('year', ev.data.archived_year).not('photo_path', 'is', null)
+  if (rows.error) throw rows.error
+  const missing: string[] = []
+  for (const { photo_path: p } of rows.data) if (!(await exists(p!))) missing.push(p!)
+  return missing
 }
 
 async function archive(): Promise<boolean> {
@@ -116,9 +140,7 @@ async function archive(): Promise<boolean> {
   if (rows.error) throw rows.error
   let ok = true
   for (const { photo_path: to } of rows.data) {
-    const [dir, file] = [to!.slice(0, to!.lastIndexOf('/')), to!.slice(to!.lastIndexOf('/') + 1)]
-    const there = await db.storage.from(BUCKET).list(dir, { search: file })
-    if (there.data?.some((o) => o.name === file)) continue
+    if (await exists(to!)) continue
     // archived path is "<year>/<live path>"
     const { error } = await db.storage.from(BUCKET).copy(to!.slice(5), to!)
     if (error) {

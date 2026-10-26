@@ -42,7 +42,9 @@ begin
     where e.id = 1 and e.reveal_at is not null and now() >= e.reveal_at) then
     raise exception 'not_revealed';
   end if;
-  if exists (select 1 from public.past_events where year = p_year) then
+  -- also blocks re-archiving the same live event under another year
+  if exists (select 1 from public.past_events where year = p_year)
+    or (select archived_year from public.event where id = 1) is not null then
     raise exception 'already_archived';
   end if;
 

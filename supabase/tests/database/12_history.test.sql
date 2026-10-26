@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(20);
 select public.reset_event(p_force => true);
 update public.event set name = 'Test Cook-Off', status = 'voting', reveal_at = now() + interval '1 hour', entries_open = true;
 
@@ -34,6 +34,7 @@ select is((select row(name, held_on, ballot_count)::text from public.past_events
   row('Test Cook-Off'::text, '2099-10-25'::date, 2)::text, 'event row archived');
 select is((select archived_year from public.event), 2099, 'event marked archived');
 select throws_ok($$select public.archive_event(2099, '2099-10-25')$$, 'already_archived');
+select throws_ok($$select public.archive_event(2100, '2100-10-25')$$, 'already_archived');
 
 -- zero ballots: everyone ties at rank 1
 select public.reset_event();

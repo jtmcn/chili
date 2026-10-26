@@ -83,4 +83,16 @@ describe('npm run event -- archive / reset', () => {
     expect(await list(withPhoto)).toEqual([])
     expect(await list(`2099/${withPhoto}`)).toHaveLength(1)
   })
+
+  it('reset refuses while an archived photo is missing, keeping the live copy', async () => {
+    await reveal()
+    run('archive', '--year', '2099', '--held-on', '2099-10-25')
+    const [name] = await list(`2099/${withPhoto}`)
+    await db().storage.from('chili-photos').remove([`2099/${withPhoto}/${name}`])
+    const r = run('reset', '--yes')
+    expect(r.status).toBe(1)
+    expect(r.out).toContain('re-run archive')
+    expect(await list(withPhoto)).toHaveLength(1)
+    expect((await db().from('chilis').select('id')).data).toHaveLength(3)
+  })
 })
