@@ -3,7 +3,7 @@ import { POST as ARCHIVE } from '@/app/api/admin/archive/route'
 import { POST as BALLOT } from '@/app/api/ballot/route'
 import { POST as CHILI } from '@/app/api/chili/route'
 import { POST as PHOTO } from '@/app/api/chili/photo/route'
-import { call, db, resetDb, setEvent } from './helpers'
+import { call, db, resetDb, setEvent, voter } from './helpers'
 
 const H = { 'x-admin-passcode': 'test-passcode' }
 const body = { year: 2099, heldOn: '2099-10-25' }
@@ -24,7 +24,7 @@ beforeEach(async () => {
   jpeg.set([0xff, 0xd8, 0xff])
   fd.set('file', new Blob([jpeg], { type: 'image/jpeg' }), 'p.jpg')
   expect((await PHOTO(new Request('http://localhost/api/chili/photo', { method: 'POST', body: fd }))).status).toBe(200)
-  expect((await call(BALLOT, { deviceId: 'voter-1', picks: [withPhoto, other, third] })).status).toBe(200)
+  expect((await call(BALLOT, { picks: [withPhoto, other, third] }, voter())).status).toBe(200)
 })
 
 describe('POST /api/admin/archive', () => {

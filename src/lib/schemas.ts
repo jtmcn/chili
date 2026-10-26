@@ -40,7 +40,6 @@ export const tagInput = z.object({
 })
 
 export const ballotInput = z.object({
-  deviceId,
   picks: z
     .array(z.uuid())
     .length(3)

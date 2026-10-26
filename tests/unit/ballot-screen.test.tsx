@@ -72,7 +72,7 @@ describe('ballot screen', () => {
     await user.click(seg(2, '3rd'))
     await user.click(screen.getByRole('button', { name: 'Save my picks' }))
     expect(await screen.findByText('Picks saved')).toBeInTheDocument()
-    expect(post).toHaveBeenCalledWith('/api/ballot', { deviceId: 'test-dev', picks: ['c4', 'c9', 'c2'] })
+    expect(post).toHaveBeenCalledWith('/api/ballot', { picks: ['c4', 'c9', 'c2'] })
     const conf = screen.getByText('Picks saved').parentElement as HTMLElement
     for (const n of ['Four', 'Nine', 'Two']) expect(within(conf).getByText(n)).toBeInTheDocument()
     expect(localStorage.getItem('chili.pendingBallot')).toBeNull()
@@ -95,7 +95,7 @@ describe('ballot screen', () => {
     localStorage.setItem('chili.pendingBallot', JSON.stringify(['c4', 'c9', 'c2']))
     render(<BallotPage />)
     expect(await screen.findByText('Picks saved')).toBeInTheDocument()
-    expect(post).toHaveBeenCalledWith('/api/ballot', { deviceId: 'test-dev', picks: ['c4', 'c9', 'c2'] })
+    expect(post).toHaveBeenCalledWith('/api/ballot', { picks: ['c4', 'c9', 'c2'] })
     expect(localStorage.getItem('chili.pendingBallot')).toBeNull()
   })
 

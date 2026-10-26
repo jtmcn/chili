@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withBotId } from "botid/next/config";
 
 const supabase = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:54321");
 
@@ -27,4 +28,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBotId(nextConfig);

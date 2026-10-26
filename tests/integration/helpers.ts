@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
+import { mintVoterToken } from '@/lib/voter'
 
 export function db() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -39,4 +40,8 @@ export async function call(
     body: JSON.stringify(body),
   }))
   return { status: res.status, json: await res.json() }
+}
+
+export function voter(): Record<string, string> {
+  return { cookie: `chili_voter=${mintVoterToken()}` }
 }

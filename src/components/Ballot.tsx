@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { clearPending, isComplete, loadPending, savePending, setPick, type Picks } from '@/lib/ballot'
 import { fetchChilis } from '@/lib/chilis'
-import { getDeviceId } from '@/lib/device-id'
 import { currentPhase, fetchEvent, offsetFrom } from '@/lib/event'
 import { useLive } from '@/lib/live'
 import { postJson } from '@/lib/post-json'
@@ -30,7 +29,7 @@ export function Ballot() {
   const [closed, setClosed] = useState(false)
 
   async function submit(p: Picks) {
-    const res = await postJson('/api/ballot', { deviceId: getDeviceId(), picks: p })
+    const res = await postJson('/api/ballot', { picks: p })
     if (res.ok) {
       clearPending()
       setHasBallot(true)
@@ -54,7 +53,7 @@ export function Ballot() {
         await submit(pending)
         return
       }
-      const r = await postJson<{ picks: Picks | null }>('/api/ballot/mine', { deviceId: getDeviceId() })
+      const r = await postJson<{ picks: Picks | null }>('/api/ballot/mine', {})
       if (r.ok && r.picks) {
         setPicks(r.picks)
         setHasBallot(true)
