@@ -137,14 +137,48 @@ isOneToOne: false
                   ]
                 },"event": {
                   Row: {
-                    "entries_open": boolean,"id": number,"name": string,"reveal_at": string | null,"status": string
+                    "archived_year": number | null,"entries_open": boolean,"id": number,"name": string,"reveal_at": string | null,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "entries_open"?: boolean,"id": number,"name": string,"reveal_at"?: string | null,"status"?: string
+                    "archived_year"?: number | null,"entries_open"?: boolean,"id": number,"name": string,"reveal_at"?: string | null,"status"?: string
                   }
                   Update: {
-                    "entries_open"?: boolean,"id"?: number,"name"?: string,"reveal_at"?: string | null,"status"?: string
+                    "archived_year"?: number | null,"entries_open"?: boolean,"id"?: number,"name"?: string,"reveal_at"?: string | null,"status"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"past_chilis": {
+                  Row: {
+                    "allergen_ids": (string)[],"cook": string | null,"description": string | null,"firsts": number,"name": string,"photo_path": string | null,"points": number,"pot_number": number,"rank": number,"seconds": number,"tag_counts": NonNullable<Json>,"thirds": number,"year": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allergen_ids"?: (string)[],"cook"?: string | null,"description"?: string | null,"firsts"?: number,"name": string,"photo_path"?: string | null,"points"?: number,"pot_number": number,"rank"?: number,"seconds"?: number,"tag_counts"?: NonNullable<Json>,"thirds"?: number,"year": number
+                  }
+                  Update: {
+                    "allergen_ids"?: (string)[],"cook"?: string | null,"description"?: string | null,"firsts"?: number,"name"?: string,"photo_path"?: string | null,"points"?: number,"pot_number"?: number,"rank"?: number,"seconds"?: number,"tag_counts"?: NonNullable<Json>,"thirds"?: number,"year"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "past_chilis_year_fkey"
+      columns: ["year"]
+isOneToOne: false
+      referencedRelation: "past_events"
+      referencedColumns: ["year"]
+    }
+                  ]
+                },"past_events": {
+                  Row: {
+                    "archived_at": string,"ballot_count": number,"held_on": string,"name": string,"year": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archived_at"?: string,"ballot_count": number,"held_on": string,"name": string,"year": number
+                  }
+                  Update: {
+                    "archived_at"?: string,"ballot_count"?: number,"held_on"?: string,"name"?: string,"year"?: number
                   }
                   Relationships: [
                     
@@ -181,6 +215,9 @@ isOneToOne: false
 "admin_update_chili":
 { Args: { "p_allergens": (string)[],"p_chili_id": string,"p_cook": string,"p_description": string,"p_name": string,"p_pot_number": number }; Returns: undefined
                            },
+"archive_event":
+{ Args: { "p_held_on": string,"p_year": number }; Returns: number
+                           },
 "ballot_count":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
@@ -216,7 +253,7 @@ isOneToOne: false
             }[]
                            },
 "reset_event":
-{ Args: { "p_name"?: string }; Returns: undefined
+{ Args: { "p_force"?: boolean,"p_name"?: string }; Returns: undefined
                            },
 "set_chili_photo":
 { Args: { "p_chili_id": string,"p_device_id": string,"p_path": string }; Returns: undefined
