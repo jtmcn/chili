@@ -1,6 +1,7 @@
 // Event housekeeping against whichever Supabase project the env points at.
-//   npm run event -- check                       grants + read-path smoke test
-//   npm run event -- reset [--name "..."] --yes  wipe entries, votes, photos; back to Setup
+//   npm run event -- check                                       grants + read-path smoke test
+//   npm run event -- archive [--year N] [--held-on YYYY-MM-DD]   save results and photos to history
+//   npm run event -- reset [--name "..."] [--force] --yes        wipe entries, votes, live photos; back to Setup
 import { parseArgs } from 'node:util'
 import { createClient } from '@supabase/supabase-js'
 
@@ -9,7 +10,13 @@ const READS = ['get_event', 'ballot_count', 'get_chilis', 'get_tag_counts', 'get
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,
-  options: { yes: { type: 'boolean', default: false }, name: { type: 'string' } },
+  options: {
+    yes: { type: 'boolean', default: false },
+    force: { type: 'boolean', default: false },
+    name: { type: 'string' },
+    year: { type: 'string' },
+    'held-on': { type: 'string' },
+  },
 })
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -52,8 +59,8 @@ async function photoPaths(): Promise<string[]> {
   const top = await db.storage.from(BUCKET).list('', { limit: 1000 })
   if (top.error) throw top.error
   const paths: string[] = []
-  // one folder per chili id
-  for (const dir of top.data) {
+  // one folder per chili id; year folders hold archived copies
+  for (const dir of top.data.filter((d) => !/^\d{4}$/.test(d.name))) {
     const inner = await db.storage.from(BUCKET).list(dir.name, { limit: 1000 })
     if (inner.error) throw inner.error
     paths.push(...inner.data.map((o) => `${dir.name}/${o.name}`))
@@ -70,20 +77,63 @@ async function reset(): Promise<boolean> {
     console.log('Nothing changed. Re-run with --yes to wipe all of it.')
     return false
   }
-  if (photos.length) {
-    const { error } = await db.storage.from(BUCKET).remove(photos)
-    if (error) throw error
+  const { error } = await db.rpc('reset_event', { ...(values.name && { p_name: values.name }), p_force: values.force })
+  if (error?.message === 'not_archived') {
+    console.error('✗ Archive first: npm run event -- archive (or pass --force to discard).')
+    return false
   }
-  const { error } = await db.rpc('reset_event', values.name ? { p_name: values.name } : {})
   if (error) throw error
+  // after the DB reset, so a refused reset keeps its photos
+  if (photos.length) {
+    const removed = await db.storage.from(BUCKET).remove(photos)
+    if (removed.error) throw removed.error
+  }
   console.log('✓ Reset: event is in Setup with entries closed and no reveal time.')
   return check()
 }
 
-const commands: Record<string, () => Promise<boolean>> = { check, reset }
+async function archive(): Promise<boolean> {
+  const ev = await db.from('event').select('reveal_at,archived_year').eq('id', 1).single()
+  if (ev.error) throw ev.error
+  const heldOn = values['held-on'] ?? (ev.data.reveal_at ? new Date(ev.data.reveal_at).toLocaleDateString('en-CA') : '')
+  const year = Number(values.year ?? heldOn.slice(0, 4))
+  if (!Number.isInteger(year) || year < 1000 || year > 9999) {
+    console.error('✗ No reveal time set; pass --year and --held-on.')
+    return false
+  }
+  if (ev.data.archived_year === year) {
+    console.log(`${year} already archived; checking photos`)
+  } else {
+    const { data, error } = await db.rpc('archive_event', { p_year: year, p_held_on: heldOn })
+    if (error) {
+      console.error(`✗ ${error.message}`)
+      return false
+    }
+    console.log(`✓ Archived ${data} chilis as ${year}`)
+  }
+
+  const rows = await db.from('past_chilis').select('photo_path').eq('year', year).not('photo_path', 'is', null)
+  if (rows.error) throw rows.error
+  let ok = true
+  for (const { photo_path: to } of rows.data) {
+    const [dir, file] = [to!.slice(0, to!.lastIndexOf('/')), to!.slice(to!.lastIndexOf('/') + 1)]
+    const there = await db.storage.from(BUCKET).list(dir, { search: file })
+    if (there.data?.some((o) => o.name === file)) continue
+    // archived path is "<year>/<live path>"
+    const { error } = await db.storage.from(BUCKET).copy(to!.slice(5), to!)
+    if (error) {
+      console.error(`✗ photo ${to}: ${error.message}`)
+      ok = false
+    }
+  }
+  console.log(ok ? `✓ Photos for ${year} are in place` : '✗ Some photos failed; re-run archive to retry.')
+  return ok
+}
+
+const commands: Record<string, () => Promise<boolean>> = { check, archive, reset }
 const run = commands[positionals[0] ?? '']
 if (!run) {
-  console.error('Usage: npm run event -- check | reset [--name "..."] --yes')
+  console.error('Usage: npm run event -- check | archive [--year N] [--held-on YYYY-MM-DD] | reset [--name "..."] [--force] --yes')
   process.exit(1)
 }
 process.exit((await run()) ? 0 : 1)
