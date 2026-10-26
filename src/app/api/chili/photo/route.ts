@@ -18,7 +18,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const db = serverClient()
   // Cheap precheck so strangers can't write objects; the RPC stays the authority.
-  const owner = await db.from('chilis').select('owner_device_id').eq('id', chiliId).maybeSingle()
+  const owner = await db.from('chilis').select('owner_device_id,photo_path').eq('id', chiliId).maybeSingle()
   if (owner.error) return fail('server_error', 500)
   if (!owner.data) return fail('invalid', 400)
   if (owner.data.owner_device_id !== deviceId) return fail('not_owner', 403)
@@ -33,5 +33,7 @@ export async function POST(req: Request): Promise<Response> {
     await db.storage.from(PHOTO_BUCKET).remove([path])
     return fromDbError(error)
   }
+  // replaced photo is unreferenced now; best-effort
+  if (owner.data.photo_path) await db.storage.from(PHOTO_BUCKET).remove([owner.data.photo_path])
   return ok({ photoUrl: photoUrl(path) })
 }

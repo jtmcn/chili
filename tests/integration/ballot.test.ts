@@ -12,7 +12,7 @@ async function seedChilis(n: number): Promise<string[]> {
   const ids: string[] = []
   for (let i = 0; i < n; i++) {
     const name = `TEST Ballot ${i}`
-    await c.rpc('create_chili', { p_device_id: `test-dev-${i}`, p_name: name, p_cook: null as unknown as string, p_description: null as unknown as string, p_allergens: [] })
+    await c.rpc('create_chili', { p_device_id: `test-dev-${i}`, p_name: name, p_cook: 'Pat', p_description: null as unknown as string, p_allergens: [] })
     const { data, error } = await c.from('chilis').select('id').eq('name', name).single()
     if (error) throw error
     ids.push(data.id)

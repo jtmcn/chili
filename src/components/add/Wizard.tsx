@@ -4,8 +4,8 @@ import { useEffect, useReducer, useState } from 'react'
 import { getDeviceId } from '@/lib/device-id'
 import { postJson } from '@/lib/post-json'
 import { fetchAllergens } from '@/lib/reference'
-import type { RefItem } from '@/lib/types'
-import { canAdvance, initialWizard, toPayload, wizardReducer } from '@/lib/wizard'
+import type { PublicChili, RefItem } from '@/lib/types'
+import { canAdvance, fromChili, initialWizard, toPayload, wizardReducer } from '@/lib/wizard'
 import { StepAllergens } from './StepAllergens'
 import { StepDescription } from './StepDescription'
 import { StepName } from './StepName'
@@ -13,9 +13,10 @@ import { StepReview } from './StepReview'
 import { Success } from './Success'
 import { primaryBtn, secondaryBtn } from '@/components/buttons'
 
-
-export function Wizard() {
+// editId reopens an owned chili; the server re-checks ownership on save.
+export function Wizard({ editId }: { editId?: string }) {
   const [s, dispatch] = useReducer(wizardReducer, initialWizard)
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'missing'>(editId ? 'loading' : 'ready')
   const [allergens, setAllergens] = useState<RefItem[]>([])
   const [pending, setPending] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
@@ -28,6 +29,14 @@ export function Wizard() {
   useEffect(() => {
     loadAllergens()
   }, [])
+  useEffect(() => {
+    if (!editId) return
+    postJson<{ chilis: PublicChili[] }>('/api/chili/mine', { deviceId: getDeviceId() }).then((r) => {
+      const mine = r.ok ? r.chilis.find((c) => c.id === editId) : undefined
+      if (mine) dispatch({ type: 'load', state: fromChili(mine) })
+      setLoadState(mine ? 'ready' : 'missing')
+    })
+  }, [editId])
 
   const nav = (a: Parameters<typeof dispatch>[0]) => {
     setNameError(null)
@@ -36,10 +45,16 @@ export function Wizard() {
   }
 
   if (created) return <Success potNumber={created.potNumber} chiliId={created.chiliId} />
+  if (loadState === 'loading') return <p>Loading your chili…</p>
+  if (loadState === 'missing') return <p role="alert">You can only edit chilis added from this phone.</p>
 
   async function submit() {
     setPending(true)
-    const r = await postJson<{ potNumber: number; chiliId: string }>('/api/chili', toPayload(s, getDeviceId()))
+    const payload = toPayload(s, getDeviceId())
+    const r = await postJson<{ potNumber: number; chiliId: string }>(
+      editId ? '/api/chili/update' : '/api/chili',
+      editId ? { ...payload, chiliId: editId } : payload,
+    )
     setPending(false)
     if (r.ok) return setCreated({ potNumber: r.potNumber, chiliId: r.chiliId })
     // Only name problems are fixed on step 1; the rest stay on the review.
@@ -95,7 +110,7 @@ export function Wizard() {
         )}
         {s.step === 4 && (
           <>
-            <StepReview s={s} allergens={allergens} onEdit={(step) => nav({ type: 'goto', step })} />
+            <StepReview s={s} allergens={allergens} editing={!!editId} onEdit={(step) => nav({ type: 'goto', step })} />
             {submitError && (
               <p role="alert" className="mt-4 text-chili">
                 {submitError}
@@ -121,7 +136,7 @@ export function Wizard() {
           </button>
         ) : (
           <button type="button" disabled={pending} onClick={submit} className={`${primaryBtn} flex-1`}>
-            {pending ? 'Adding…' : 'Add my chili'}
+            {editId ? (pending ? 'Saving…' : 'Save changes') : pending ? 'Adding…' : 'Add my chili'}
           </button>
         )}
       </div>

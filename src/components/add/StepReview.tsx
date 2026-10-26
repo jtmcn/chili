@@ -6,10 +6,12 @@ export function StepReview({
   s,
   allergens,
   onEdit,
+  editing = false,
 }: {
   s: WizardState
   allergens: RefItem[]
   onEdit: (step: Step) => void
+  editing?: boolean
 }) {
   const labels = s.allergens.map((id) => allergens.find((a) => a.id === id)?.label ?? id)
   const edit = (step: Step, what: string) => (
@@ -19,11 +21,11 @@ export function StepReview({
   )
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-[28px] font-semibold leading-tight">Ready to add it?</h1>
+      <h1 className="text-[28px] font-semibold leading-tight">{editing ? 'Ready to save?' : 'Ready to add it?'}</h1>
       <div className="flex items-center justify-between border-b border-rule pb-2">
         <div>
           <p className="text-[22px] font-semibold">{s.name.trim()}</p>
-          {s.cook.trim() && <p>{s.cook.trim()}</p>}
+          <p>by {s.cook.trim()}</p>
         </div>
         {edit(1, 'name')}
       </div>

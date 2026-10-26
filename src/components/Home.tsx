@@ -12,6 +12,7 @@ import { actionBar, primaryBtn, secondaryBtn } from './buttons'
 import { ChiliList } from './ChiliList'
 import { Countdown } from './Countdown'
 import { EventBand } from './EventBand'
+import { MyChilis } from './MyChilis'
 import { Results } from './Results'
 import type { RefItem, TagCount } from '@/lib/types'
 
@@ -58,6 +59,7 @@ export function Home() {
       </EventBand>
       <main className="mx-auto w-full max-w-md flex-1 px-4">
         {revealed && chilis && <ResultsPanel chiliCount={chilis.length} tags={tags} tagCounts={tagCounts} />}
+        {event && !revealed && <MyChilis />}
         {!revealed && chilis && <ChiliList chilis={chilis} allergens={allergens ?? []} entriesOpen={canAdd} tags={tags} tagCounts={tagCounts} />}
       </main>
       {(voting || canAdd) && (

@@ -24,10 +24,13 @@ async function upload(deviceId: string, chiliId: string, file: Blob) {
 const photoPath = async (id: string) =>
   (await db().rpc('get_chilis')).data!.find((c) => c.id === id)?.photo_path ?? null
 
+const objects = async (id: string) =>
+  ((await db().storage.from('chili-photos').list(id)).data ?? []).map((o) => o.name)
+
 let chiliId: string
 beforeEach(async () => {
   await resetDb()
-  const r = await call(CHILI, { deviceId: 'test-dev-1', name: 'TEST Photo', noAllergens: true })
+  const r = await call(CHILI, { deviceId: 'test-dev-1', name: 'TEST Photo', cook: 'Pat', noAllergens: true })
   chiliId = r.json.chiliId
 })
 
@@ -71,10 +74,21 @@ describe('POST /api/chili/photo', () => {
   it('rejects a bad chiliId', async () => {
     expect((await upload('test-dev-1', 'nope', jpeg())).status).toBe(400)
   })
-  it('admin removePhoto clears photo_path', async () => {
+  it('admin removePhoto clears photo_path and the stored object', async () => {
     await upload('test-dev-1', chiliId, jpeg())
     const r = await call(ADMIN, { action: 'removePhoto', chiliId }, H)
     expect(r.status).toBe(200)
     expect(await photoPath(chiliId)).toBeNull()
+    expect(await objects(chiliId)).toEqual([])
+  })
+  it('admin delete removes the stored photo', async () => {
+    await upload('test-dev-1', chiliId, jpeg())
+    expect((await call(ADMIN, { action: 'delete', chiliId }, H)).status).toBe(200)
+    expect(await objects(chiliId)).toEqual([])
+  })
+  it('a replacement photo removes the old object', async () => {
+    await upload('test-dev-1', chiliId, jpeg())
+    await upload('test-dev-1', chiliId, jpeg())
+    expect(await objects(chiliId)).toEqual([(await photoPath(chiliId))!.split('/')[1]])
   })
 })

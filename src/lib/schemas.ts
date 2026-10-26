@@ -5,18 +5,25 @@ export const ALLERGEN_IDS = [
   'peanuts', 'wheat', 'soy', 'sesame', 'gluten',
 ] as const
 
-export const chiliInput = z
-  .object({
-    deviceId: z.string().min(1).max(100),
-    name: z.string().trim().min(2).max(40),
-    cook: z.string().trim().max(40).optional(),
-    description: z.string().trim().max(200).optional(),
-    allergens: z.array(z.enum(ALLERGEN_IDS)).optional(),
-    noAllergens: z.literal(true).optional(),
-  })
-  .refine((v) => (v.allergens?.length ? 1 : 0) + (v.noAllergens ? 1 : 0) === 1, {
-    message: 'Pick allergens or "no allergens"',
-  })
+const deviceId = z.string().min(1).max(100)
+// Required so the reveal can credit every cook.
+const cook = z.string().trim().min(1).max(40)
+
+const chiliFields = z.object({
+  deviceId,
+  name: z.string().trim().min(2).max(40),
+  cook,
+  description: z.string().trim().max(200).optional(),
+  allergens: z.array(z.enum(ALLERGEN_IDS)).optional(),
+  noAllergens: z.literal(true).optional(),
+})
+const oneAllergenAnswer = (v: { allergens?: string[]; noAllergens?: true }) =>
+  (v.allergens?.length ? 1 : 0) + (v.noAllergens ? 1 : 0) === 1
+
+export const chiliInput = chiliFields.refine(oneAllergenAnswer, { message: 'Pick allergens or "no allergens"' })
+export const chiliUpdateInput = chiliFields
+  .extend({ chiliId: z.uuid() })
+  .refine(oneAllergenAnswer, { message: 'Pick allergens or "no allergens"' })
 
 export type ChiliInput = z.infer<typeof chiliInput>
 
@@ -28,12 +35,12 @@ export const TAG_IDS = [
 export const tagInput = z.object({
   chiliId: z.uuid(),
   tagId: z.enum(TAG_IDS),
-  deviceId: z.string().min(1).max(100),
+  deviceId,
   on: z.boolean(),
 })
 
 export const ballotInput = z.object({
-  deviceId: z.string().min(1).max(100),
+  deviceId,
   picks: z
     .array(z.uuid())
     .length(3)
@@ -41,15 +48,15 @@ export const ballotInput = z.object({
 })
 
 export const photoInput = z.object({
-  deviceId: z.string().min(1).max(100),
+  deviceId,
   chiliId: z.uuid(),
 })
 
-export const ballotMineInput = z.object({ deviceId: z.string().min(1).max(100) })
+export const deviceInput = z.object({ deviceId })
 
 const adminFields = {
   name: z.string().trim().min(2).max(40),
-  cook: z.string().trim().max(40),
+  cook,
   description: z.string().trim().max(200),
   allergens: z.array(z.enum(ALLERGEN_IDS)),
 }
@@ -58,7 +65,7 @@ export const adminChiliInput = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('create'),
     name: adminFields.name,
-    cook: adminFields.cook.optional(),
+    cook: adminFields.cook,
     description: adminFields.description.optional(),
     allergens: adminFields.allergens.optional(),
     potNumber: z.number().int().positive().nullish(),

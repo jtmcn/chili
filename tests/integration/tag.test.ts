@@ -6,7 +6,7 @@ import { call, resetDb, setEvent } from './helpers'
 
 async function seedChili(): Promise<string> {
   const c = createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
-  await c.rpc('create_chili', { p_device_id: 'test-dev-1', p_name: 'TEST Tagged', p_cook: null as unknown as string, p_description: null as unknown as string, p_allergens: [] })
+  await c.rpc('create_chili', { p_device_id: 'test-dev-1', p_name: 'TEST Tagged', p_cook: 'Pat', p_description: null as unknown as string, p_allergens: [] })
   const { data, error } = await c.from('chilis').select('id').eq('name', 'TEST Tagged').single()
   if (error) throw error
   return data.id

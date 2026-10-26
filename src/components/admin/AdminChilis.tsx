@@ -19,11 +19,12 @@ const fromChili = (c: PublicChili): Draft => ({
 const input = 'min-h-12 w-full rounded border border-rule px-3'
 
 function Fields({ d, set, allergens }: { d: Draft; set: (d: Draft) => void; allergens: RefItem[] }) {
-  const f = (k: keyof Draft, label: string, type = 'text') => (
+  const f = (k: keyof Draft, label: string, type = 'text', required = false) => (
     <label className="mt-2 block">
       {label}
       <input
         type={type}
+        required={required}
         value={d[k] as string}
         onChange={(e) => set({ ...d, [k]: e.target.value })}
         className={input}
@@ -32,8 +33,8 @@ function Fields({ d, set, allergens }: { d: Draft; set: (d: Draft) => void; alle
   )
   return (
     <>
-      {f('name', 'Chili name')}
-      {f('cook', 'Cook')}
+      {f('name', 'Chili name', 'text', true)}
+      {f('cook', 'Cook', 'text', true)}
       {f('potNumber', 'Pot number', 'number')}
       {f('description', 'Description')}
       <fieldset className="mt-2">
