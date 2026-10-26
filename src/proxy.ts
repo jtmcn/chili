@@ -8,7 +8,7 @@ export function proxy(req: NextRequest) {
   if (token) {
     res.cookies.set(VOTER_COOKIE, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: req.nextUrl.protocol === 'https:',
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
@@ -19,5 +19,5 @@ export function proxy(req: NextRequest) {
 
 // Pages only: the ballot API must never mint its own voter.
 export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)'],
+  matcher: ['/((?!api/|_next/|.*\\..*).*)'],
 }

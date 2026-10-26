@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server'
 import { proxy } from '@/proxy'
 import { mintVoterToken, verifyVoterToken } from '@/lib/voter'
 
-const visit = (cookie?: string) => proxy(new NextRequest('http://localhost/ballot', { headers: cookie ? { cookie } : {} }))
+const visit = (cookie?: string, url = 'http://localhost/ballot') => proxy(new NextRequest(url, { headers: cookie ? { cookie } : {} }))
 
 describe('proxy', () => {
   beforeEach(() => vi.stubEnv('VOTER_SECRET', 'test-secret'))
@@ -14,6 +14,11 @@ describe('proxy', () => {
     const c = visit().cookies.get('chili_voter')!
     expect(verifyVoterToken(c.value)).not.toBeNull()
     expect(c.httpOnly).toBe(true)
+    expect(c.secure).toBe(false)
+  })
+
+  it('marks the cookie secure over https', () => {
+    expect(visit(undefined, 'https://chili.example/').cookies.get('chili_voter')!.secure).toBe(true)
   })
 
   it('keeps a valid voter cookie', () => {
