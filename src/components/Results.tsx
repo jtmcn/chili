@@ -1,3 +1,5 @@
+import Image from 'next/image'
+import { photoUrl } from '@/lib/photo'
 import { ordinal } from '@/lib/rank'
 import type { ResultRow } from '@/lib/types'
 import { PotNumber } from './PotNumber'
@@ -19,7 +21,19 @@ export function Results({
         const tags = topTags(r.chiliId)
         return (
           <li key={r.chiliId} className="grid min-h-[72px] grid-cols-[72px_1fr_auto] items-start gap-3.5 py-3.5">
-            <PotNumber n={r.potNumber} size="row" />
+            <span className="grid justify-items-start gap-2">
+              <PotNumber n={r.potNumber} size="row" />
+              {r.photoPath && (
+                <Image
+                  src={photoUrl(r.photoPath)}
+                  alt={`Photo of ${r.name}`}
+                  width={72}
+                  height={72}
+                  sizes="72px"
+                  className="size-[72px] rounded-[10px] border border-rule object-cover"
+                />
+              )}
+            </span>
             <span className="min-w-0">
               <span className="mt-0.5 block text-[22px] font-semibold leading-tight">{r.name}</span>
               <span className="block">{r.cook ? `Cook: ${r.cook}` : null}</span>

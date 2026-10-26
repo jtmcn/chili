@@ -28,7 +28,7 @@ select throws_ok($$select public.update_chili('owner', gen_random_uuid(), 'Anon'
 select throws_ok($$select public.reset_event()$$, '42501');
 reset role;
 
-select public.reset_event('Next Year Cook-Off');
+select public.reset_event('Next Year Cook-Off', p_force => true);
 select is((select row(name, status, reveal_at, entries_open)::text from public.event where id = 1),
   row('Next Year Cook-Off', 'setup', null::timestamptz, false)::text, 'event back to setup');
 select is(public.create_chili('new', 'Fresh', 'Cy', null, '{}', true), 1, 'pot numbers restart at 1');

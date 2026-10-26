@@ -61,6 +61,9 @@ export function Home() {
         {revealed && chilis && <ResultsPanel chiliCount={chilis.length} tags={tags} tagCounts={tagCounts} />}
         {event && !revealed && <MyChilis />}
         {!revealed && chilis && <ChiliList chilis={chilis} allergens={allergens ?? []} entriesOpen={canAdd} tags={tags} tagCounts={tagCounts} />}
+        <Link href="/history" className="flex min-h-12 items-center text-enamel underline">
+          Past cook-offs
+        </Link>
       </main>
       {(voting || canAdd) && (
         <div className={actionBar}>

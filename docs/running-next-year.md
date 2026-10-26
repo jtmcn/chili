@@ -5,8 +5,9 @@
 1. Push migrations to prod: `npx supabase link --project-ref ivvzfqqkhftoyowanhck`, then `npx supabase db push`.
 2. Get prod env vars: `vercel env pull .env.production.local --environment=production` (or copy `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` into that file by hand; it's gitignored).
 3. `npm run event -- check`: fails if prod is missing a grant that local hides, which is what broke prod on 2026-10-25.
-4. `npm run event -- reset --name "Overlook Chili Cook-Off 2027"`: dry run that prints what would be wiped. Re-run with `--yes` to wipe chilis, votes, tags and photos, restart pot numbers at 1, and put the event in Setup.
-5. Run the PRD acceptance checklist on two real phones on cellular data. It was skipped in 2026 (#9).
+4. `npm run event -- archive`: saves last year's results and photos to `/history`. Check `/history/<year>` looks right. It's safe to re-run.
+5. `npm run event -- reset --name "Overlook Chili Cook-Off"`: dry run that prints what would be wiped. Re-run with `--yes` to wipe chilis, votes, tags and live photos, restart pot numbers at 1, and put the event in Setup. It refuses until the event and its photos are archived; `--force` skips that, e.g. for clearing test data.
+6. Run the PRD acceptance checklist on two real phones on cellular data. It was skipped in 2026 (#9).
 
 ## On the day
 

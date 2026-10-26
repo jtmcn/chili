@@ -41,6 +41,7 @@ export interface ResultRow {
   seconds: number
   thirds: number
   rank: number
+  photoPath?: string | null
 }
 
 export type ApiResult<T> =

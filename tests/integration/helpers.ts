@@ -15,8 +15,10 @@ export async function resetDb(): Promise<void> {
     const { error } = await c.from(t).delete().not(col, 'is', null)
     if (error) throw error
   }
+  const past = await c.from('past_events').delete().gte('year', 0)
+  if (past.error) throw past.error
   const { error } = await c.from('event')
-    .update({ status: 'setup', reveal_at: null, entries_open: true })
+    .update({ status: 'setup', reveal_at: null, entries_open: true, archived_year: null })
     .eq('id', 1)
   if (error) throw error
 }
