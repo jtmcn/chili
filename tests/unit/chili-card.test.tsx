@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ChiliCard } from '@/components/ChiliCard'
 import { ChiliList } from '@/components/ChiliList'
@@ -18,12 +18,25 @@ const chili: PublicChili = {
   photoPath: null,
 }
 
+afterEach(() => vi.unstubAllEnvs())
+
 describe('ChiliCard', () => {
   it('shows pot, name and allergen badge', () => {
     render(<ChiliCard chili={chili} allergens={allergens} />)
     expect(screen.getByRole('img', { name: 'Pot 3' })).toBeInTheDocument()
     expect(screen.getByText('Brisket Fire')).toBeInTheDocument()
     expect(screen.getByText('Eggs')).toBeInTheDocument()
+  })
+  it('shows a photo thumbnail when the chili has a photo', () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://localhost:54321')
+    const { container } = render(<ChiliCard chili={{ ...chili, photoPath: 'abc/1.jpg' }} allergens={allergens} />)
+    const thumb = container.querySelector('img[data-thumb]')
+    expect(thumb).not.toBeNull()
+    expect(thumb?.getAttribute('src')).toContain(encodeURIComponent('chili-photos/abc/1.jpg'))
+  })
+  it('shows no thumbnail without a photo', () => {
+    const { container } = render(<ChiliCard chili={chili} allergens={allergens} />)
+    expect(container.querySelector('img[data-thumb]')).toBeNull()
   })
   it('never shows the cook', () => {
     render(<ChiliCard chili={chili} allergens={allergens} />)
