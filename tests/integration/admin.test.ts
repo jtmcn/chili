@@ -8,7 +8,7 @@ import { call, resetDb, setEvent } from './helpers'
 
 const svc = () => createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
 const H = { 'x-admin-passcode': 'test-passcode' }
-const create = (name: string) => call(CHILI, { action: 'create', name }, H)
+const create = (name: string) => call(CHILI, { action: 'create', name, cook: 'Pat' }, H)
 const idOf = async (name: string) => (await svc().from('chilis').select('id').eq('name', name).single()).data!.id
 
 beforeEach(resetDb)
@@ -47,7 +47,7 @@ describe('admin chili', () => {
     expect(r.json).toMatchObject({ error: 'pot_taken' })
   })
   it('create with potNumber assigns it', async () => {
-    const r = await call(CHILI, { action: 'create', name: 'TEST Admin A', potNumber: 42 }, H)
+    const r = await call(CHILI, { action: 'create', name: 'TEST Admin A', cook: 'Pat', potNumber: 42 }, H)
     expect(r.json.potNumber).toBe(42)
     expect((await svc().from('chilis').select('pot_number').eq('name', 'TEST Admin A').single()).data!.pot_number).toBe(42)
   })
@@ -57,17 +57,21 @@ describe('admin chili', () => {
     expect((await svc().from('chilis').select('pot_number').eq('name', 'TEST Admin A').single()).data!.pot_number).toBe(pot)
   })
   it('update changes fields and replaces allergens', async () => {
-    await call(CHILI, { action: 'create', name: 'TEST Admin A', allergens: ['milk'] }, H)
+    await call(CHILI, { action: 'create', name: 'TEST Admin A', cook: 'Pat', allergens: ['milk'] }, H)
     const id = await idOf('TEST Admin A')
     const r = await call(CHILI, { action: 'update', chiliId: id, cook: 'Pat', allergens: ['soy', 'eggs'] }, H)
     expect(r.status).toBe(200)
     const s = await call(STATE, {}, H)
     expect(s.json.chilis[0]).toMatchObject({ name: 'TEST Admin A', cook: 'Pat', allergenIds: ['eggs', 'soy'] })
   })
-  it("update with '' clears cook", async () => {
-    await call(CHILI, { action: 'create', name: 'TEST Admin A', cook: 'Pat' }, H)
-    await call(CHILI, { action: 'update', chiliId: await idOf('TEST Admin A'), cook: '', potNumber: null }, H)
-    expect((await call(STATE, {}, H)).json.chilis[0].cook).toBeNull()
+  it('create without a cook is 400', async () => {
+    expect((await call(CHILI, { action: 'create', name: 'TEST Admin A' }, H)).status).toBe(400)
+  })
+  it("update can't clear cook", async () => {
+    await create('TEST Admin A')
+    const r = await call(CHILI, { action: 'update', chiliId: await idOf('TEST Admin A'), cook: '', potNumber: null }, H)
+    expect(r.status).toBe(400)
+    expect((await call(STATE, {}, H)).json.chilis[0].cook).toBe('Pat')
   })
   it('update of an unknown chili is 400', async () => {
     const r = await call(CHILI, { action: 'update', chiliId: crypto.randomUUID(), cook: 'x' }, H)

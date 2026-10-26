@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run -c vitest.integration.config.ts"
+    "test:integration": "vitest run -c vitest.integration.config.ts",
+    "event": "node --env-file-if-exists=.env.production.local scripts/event.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

@@ -1,10 +1,10 @@
 import { serverClient } from '@/lib/supabase/server'
-import { ballotMineInput } from '@/lib/schemas'
+import { deviceInput } from '@/lib/schemas'
 import { fail, ok } from '@/lib/http'
 
 export async function POST(req: Request): Promise<Response> {
   const body = await req.json().catch(() => null)
-  const parsed = ballotMineInput.safeParse(body)
+  const parsed = deviceInput.safeParse(body)
   if (!parsed.success) return fail('invalid', 400)
 
   const { data, error } = await serverClient()

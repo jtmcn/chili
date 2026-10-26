@@ -1,5 +1,6 @@
 import { requireAdmin } from '@/lib/admin-auth'
 import { fail, fromDbError, isPotTaken, ok } from '@/lib/http'
+import { PHOTO_BUCKET } from '@/lib/photo'
 import { adminChiliInput } from '@/lib/schemas'
 import { serverClient } from '@/lib/supabase/server'
 
@@ -19,8 +20,8 @@ export async function POST(req: Request): Promise<Response> {
       res = await db.rpc('create_chili', {
         p_device_id: 'admin',
         p_name: v.name,
-        // nullable text params; generated types omit null
-        p_cook: (v.cook || null) as string,
+        p_cook: v.cook,
+        // nullable text param; generated types omit null
         p_description: (v.description || null) as string,
         p_allergens: v.allergens ?? [],
         p_as_admin: true,
@@ -56,13 +57,13 @@ export async function POST(req: Request): Promise<Response> {
     if (error) return fromDbError(error)
     return ok({})
   }
-  if (v.action === 'removePhoto') {
-    // storage object is left behind; it's unreferenced and cheap
-    const { error } = await db.rpc('admin_set_chili_photo', { p_chili_id: v.chiliId, p_path: null as unknown as string })
-    if (error) return fromDbError(error)
-    return ok({})
-  }
-  const { error } = await db.rpc('admin_delete_chili', { p_chili_id: v.chiliId })
+  const photo = await db.from('chilis').select('photo_path').eq('id', v.chiliId).maybeSingle()
+  if (photo.error) return fail('server_error', 500)
+  const { error } = v.action === 'removePhoto'
+    ? await db.rpc('admin_set_chili_photo', { p_chili_id: v.chiliId, p_path: null as unknown as string })
+    : await db.rpc('admin_delete_chili', { p_chili_id: v.chiliId })
   if (error) return fromDbError(error)
+  // best-effort: the row change already succeeded
+  if (photo.data?.photo_path) await db.storage.from(PHOTO_BUCKET).remove([photo.data.photo_path])
   return ok({})
 }

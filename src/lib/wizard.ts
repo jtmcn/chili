@@ -1,3 +1,5 @@
+import type { PublicChili } from '@/lib/types'
+
 export type Step = 1 | 2 | 3 | 4
 
 export interface WizardState {
@@ -53,7 +55,7 @@ export function wizardReducer(s: WizardState, a: WizardAction): WizardState {
 }
 
 export function canAdvance(s: WizardState): boolean {
-  if (s.step === 1) return s.name.trim().length >= 2
+  if (s.step === 1) return s.name.trim().length >= 2 && s.cook.trim().length > 0
   if (s.step === 3) return s.noAllergens || s.allergens.length > 0
   return true
 }
@@ -65,8 +67,20 @@ export function toPayload(s: WizardState, deviceId: string) {
   return {
     deviceId,
     name: s.name.trim(),
-    ...(cook && { cook }),
+    cook,
     ...(description && { description }),
     ...(s.noAllergens ? { noAllergens: true as const } : { allergens: s.allergens }),
+  }
+}
+
+// Reopens an owned chili on the review step; no allergens was an explicit answer when it was saved.
+export function fromChili(c: PublicChili): WizardState {
+  return {
+    step: 4,
+    name: c.name,
+    cook: c.cook ?? '',
+    description: c.description ?? '',
+    allergens: c.allergenIds,
+    noAllergens: c.allergenIds.length === 0,
   }
 }

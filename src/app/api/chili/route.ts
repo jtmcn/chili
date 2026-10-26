@@ -15,8 +15,8 @@ export async function POST(req: Request): Promise<Response> {
     res = await db.rpc('create_chili', {
       p_device_id: v.deviceId,
       p_name: v.name,
-      // nullable text params; generated types omit null
-      p_cook: (v.cook || null) as string,
+      p_cook: v.cook,
+      // nullable text param; generated types omit null
       p_description: (v.description || null) as string,
       p_allergens: v.noAllergens ? [] : v.allergens!,
     })

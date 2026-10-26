@@ -210,6 +210,14 @@ isOneToOne: false
               "chili_id": string,"count": number,"tag_id": string
             }[]
                            },
+"grant_gaps":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "kind": string,"name": string
+            }[]
+                           },
+"reset_event":
+{ Args: { "p_name"?: string }; Returns: undefined
+                           },
 "set_chili_photo":
 { Args: { "p_chili_id": string,"p_device_id": string,"p_path": string }; Returns: undefined
                            },
@@ -218,6 +226,9 @@ isOneToOne: false
                            },
 "submit_ballot":
 { Args: { "p_device_id": string,"p_first": string,"p_second": string,"p_third": string }; Returns: undefined
+                           },
+"update_chili":
+{ Args: { "p_allergens": (string)[],"p_chili_id": string,"p_cook": string,"p_description": string,"p_device_id": string,"p_name": string }; Returns: number
                            },
 "voting_open":
 { Args: Record<PropertyKey, never>; Returns: boolean
