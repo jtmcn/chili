@@ -10,6 +10,8 @@ export const MESSAGES: Record<string, string> = {
   invalid: "Something's not right with that entry.",
   server_error: 'Something went wrong. Try again.',
   unauthorized: 'Wrong passcode.',
+  not_revealed: "Results aren't revealed yet.",
+  already_archived: 'This event is already archived.',
 }
 
 export function ok<T extends object>(body: T, status = 200): Response {
@@ -25,6 +27,8 @@ const RAISED: Record<string, number> = {
   voting_closed: 403,
   not_owner: 403,
   device_limit: 409,
+  not_revealed: 409,
+  already_archived: 409,
 }
 
 export function fromDbError(e: PostgrestError): Response {
