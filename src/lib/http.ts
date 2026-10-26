@@ -12,6 +12,8 @@ export const MESSAGES: Record<string, string> = {
   unauthorized: 'Wrong passcode.',
   not_revealed: "Results aren't revealed yet.",
   already_archived: 'This event is already archived.',
+  no_voter: 'Reload the page and try again.',
+  bot: "We couldn't verify this browser. Reload and try again.",
 }
 
 export function ok<T extends object>(body: T, status = 200): Response {

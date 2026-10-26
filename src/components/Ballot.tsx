@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { clearPending, isComplete, loadPending, savePending, setPick, type Picks } from '@/lib/ballot'
 import { fetchChilis } from '@/lib/chilis'
-import { getDeviceId } from '@/lib/device-id'
 import { currentPhase, fetchEvent, offsetFrom } from '@/lib/event'
 import { useLive } from '@/lib/live'
 import { postJson } from '@/lib/post-json'
@@ -16,6 +15,8 @@ import { PotNumber } from './PotNumber'
 
 const RANKS = ['1st', '2nd', '3rd'] as const
 const EMPTY: Picks = [null, null, null]
+// a reload fixes these, and the kept ballot resubmits on mount
+const RETRYABLE = new Set(['network', 'server_error', 'no_voter', 'bot'])
 
 export function Ballot() {
   const { data: event } = useLive(['event'], fetchEvent)
@@ -30,15 +31,14 @@ export function Ballot() {
   const [closed, setClosed] = useState(false)
 
   async function submit(p: Picks) {
-    const res = await postJson('/api/ballot', { deviceId: getDeviceId(), picks: p })
+    const res = await postJson('/api/ballot', { picks: p })
     if (res.ok) {
       clearPending()
       setHasBallot(true)
       setConfirmed(true)
       setError(undefined)
     } else {
-      // a 4xx is final; only network/5xx keep the ballot for retry
-      if (res.error !== 'network' && res.error !== 'server_error') clearPending()
+      if (!RETRYABLE.has(res.error)) clearPending()
       if (res.error === 'voting_closed') setClosed(true)
       else setError(res.message)
     }
@@ -54,7 +54,7 @@ export function Ballot() {
         await submit(pending)
         return
       }
-      const r = await postJson<{ picks: Picks | null }>('/api/ballot/mine', { deviceId: getDeviceId() })
+      const r = await postJson<{ picks: Picks | null }>('/api/ballot/mine', {})
       if (r.ok && r.picks) {
         setPicks(r.picks)
         setHasBallot(true)

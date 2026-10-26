@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { checkBotId } from 'botid/server'
 import { POST } from '@/app/api/ballot/route'
 import { POST as MINE } from '@/app/api/ballot/mine/route'
 import type { Database } from '@/lib/database.types'
-import { call, resetDb, setEvent } from './helpers'
+import { call, resetDb, setEvent, voter as newVoter } from './helpers'
+
+const human = { isHuman: true, isBot: false, isVerifiedBot: false, bypassed: false }
 
 const svc = () => createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
 
@@ -22,31 +25,51 @@ async function seedChilis(n: number): Promise<string[]> {
 
 const open = () => setEvent({ status: 'voting', reveal_at: new Date(Date.now() + 3600_000).toISOString() })
 
-beforeEach(resetDb)
+let voter: Record<string, string>
+beforeEach(async () => {
+  await resetDb()
+  vi.mocked(checkBotId).mockResolvedValue(human)
+  voter = newVoter()
+})
 
 describe('POST /api/ballot', () => {
   it('accepts a valid ballot', async () => {
     const ids = await seedChilis(3)
     await open()
-    const r = await call(POST, { deviceId: 'test-voter', picks: ids })
+    const r = await call(POST, { picks: ids }, voter)
     expect(r.status).toBe(200)
     expect(r.json).toEqual({ ok: true })
   })
   it('rejects duplicate picks', async () => {
     const ids = await seedChilis(3)
     await open()
-    expect((await call(POST, { deviceId: 'test-voter', picks: [ids[0], ids[0], ids[1]] })).status).toBe(400)
+    expect((await call(POST, { picks: [ids[0], ids[0], ids[1]] }, voter)).status).toBe(400)
   })
   it('rejects two picks', async () => {
     const ids = await seedChilis(3)
     await open()
-    expect((await call(POST, { deviceId: 'test-voter', picks: ids.slice(0, 2) })).status).toBe(400)
+    expect((await call(POST, { picks: ids.slice(0, 2) }, voter)).status).toBe(400)
+  })
+  it('rejects a ballot without a signed voter cookie', async () => {
+    const ids = await seedChilis(3)
+    await open()
+    expect((await call(POST, { deviceId: 'test-voter', picks: ids })).status).toBe(401)
+    const forged = { cookie: `chili_voter=${crypto.randomUUID()}.forged` }
+    expect((await call(POST, { picks: ids }, forged)).status).toBe(401)
+  })
+  it('rejects a bot', async () => {
+    const ids = await seedChilis(3)
+    await open()
+    vi.mocked(checkBotId).mockResolvedValue({ ...human, isHuman: false, isBot: true })
+    const r = await call(POST, { picks: ids }, voter)
+    expect(r.status).toBe(403)
+    expect(r.json).toMatchObject({ error: 'bot' })
   })
   it('rejects a deleted chili as invalid', async () => {
     const ids = await seedChilis(3)
     await open()
     await svc().from('chilis').delete().eq('id', ids[1])
-    const r = await call(POST, { deviceId: 'test-voter', picks: ids })
+    const r = await call(POST, { picks: ids }, voter)
     expect(r.status).toBe(400)
     expect(r.json).toMatchObject({ error: 'invalid' })
   })
@@ -56,15 +79,15 @@ describe('POST /api/ballot/mine', () => {
   it('returns the latest picks', async () => {
     const ids = await seedChilis(3)
     await open()
-    await call(POST, { deviceId: 'test-voter', picks: ids })
+    await call(POST, { picks: ids }, voter)
     const swapped = [ids[2], ids[1], ids[0]]
-    await call(POST, { deviceId: 'test-voter', picks: swapped })
-    const r = await call(MINE, { deviceId: 'test-voter' })
+    await call(POST, { picks: swapped }, voter)
+    const r = await call(MINE, {}, voter)
     expect(r.status).toBe(200)
     expect(r.json).toEqual({ ok: true, picks: swapped })
   })
-  it('returns null for an unknown device', async () => {
-    const r = await call(MINE, { deviceId: 'test-nobody' })
+  it('returns null for a voter with no ballot', async () => {
+    const r = await call(MINE, {}, voter)
     expect(r.json).toEqual({ ok: true, picks: null })
   })
 })

@@ -72,14 +72,18 @@ describe('ballot screen', () => {
     await user.click(seg(2, '3rd'))
     await user.click(screen.getByRole('button', { name: 'Save my picks' }))
     expect(await screen.findByText('Picks saved')).toBeInTheDocument()
-    expect(post).toHaveBeenCalledWith('/api/ballot', { deviceId: 'test-dev', picks: ['c4', 'c9', 'c2'] })
+    expect(post).toHaveBeenCalledWith('/api/ballot', { picks: ['c4', 'c9', 'c2'] })
     const conf = screen.getByText('Picks saved').parentElement as HTMLElement
     for (const n of ['Four', 'Nine', 'Two']) expect(within(conf).getByText(n)).toBeInTheDocument()
     expect(localStorage.getItem('chili.pendingBallot')).toBeNull()
   })
 
-  it('keeps pending when the save fails on the network', async () => {
-    route(undefined, { ok: false, error: 'network', message: 'No connection' })
+  it.each([
+    ['network', 'No connection'],
+    ['no_voter', 'Reload the page and try again.'],
+    ['bot', "We couldn't verify this browser. Reload and try again."],
+  ])('keeps pending when the save fails with %s', async (error, message) => {
+    route(undefined, { ok: false, error, message })
     const user = userEvent.setup()
     render(<BallotPage />)
     await screen.findByRole('img', { name: 'Pot 4' })
@@ -87,7 +91,7 @@ describe('ballot screen', () => {
     await user.click(seg(9, '2nd'))
     await user.click(seg(2, '3rd'))
     await user.click(screen.getByRole('button', { name: 'Save my picks' }))
-    expect(await screen.findByText('No connection')).toBeInTheDocument()
+    expect(await screen.findByText(message)).toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem('chili.pendingBallot')!)).toEqual(['c4', 'c9', 'c2'])
   })
 
@@ -95,7 +99,7 @@ describe('ballot screen', () => {
     localStorage.setItem('chili.pendingBallot', JSON.stringify(['c4', 'c9', 'c2']))
     render(<BallotPage />)
     expect(await screen.findByText('Picks saved')).toBeInTheDocument()
-    expect(post).toHaveBeenCalledWith('/api/ballot', { deviceId: 'test-dev', picks: ['c4', 'c9', 'c2'] })
+    expect(post).toHaveBeenCalledWith('/api/ballot', { picks: ['c4', 'c9', 'c2'] })
     expect(localStorage.getItem('chili.pendingBallot')).toBeNull()
   })
 

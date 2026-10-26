@@ -6,6 +6,7 @@ import { fetchAllergens } from '@/lib/reference'
 import type { EventState, PublicChili, RefItem } from '@/lib/types'
 import { useAdminPost } from './AdminGate'
 import { AdminArchive } from './AdminArchive'
+import { AdminBallots } from './AdminBallots'
 import { AdminChilis } from './AdminChilis'
 import { AdminEvent } from './AdminEvent'
 import { AdminQr } from './AdminQr'
@@ -44,8 +45,8 @@ export function AdminDashboard() {
   return (
     <main className="mx-auto w-full max-w-md p-4 print:max-w-none print:p-0">
       <h1 className="event-name text-[28px] font-semibold">{data.event.name}</h1>
-      <p className="print:hidden">{data.ballotCount} ballots in</p>
       <div className="print:hidden">
+        <AdminBallots ballotCount={data.ballotCount} />
         <AdminEvent key={data.event.revealAt ?? 'none'} event={data.event} onChange={refresh} />
         <AdminArchive key={data.event.revealAt ?? 'none'} event={data.event} archivedYear={data.archivedYear} onChange={refresh} />
         <AdminChilis chilis={data.chilis} allergens={allergens} onChange={refresh} />
