@@ -17,7 +17,10 @@ const local = new Date(revealed.revealAt!)
 const p = (n: number) => String(n).padStart(2, '0')
 const localDate = `${local.getFullYear()}-${p(local.getMonth() + 1)}-${p(local.getDate())}`
 
-beforeEach(() => post.mockReset())
+beforeEach(() => {
+  post.mockReset()
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+})
 
 describe('AdminArchive', () => {
   it('renders nothing before the reveal', () => {
@@ -40,6 +43,14 @@ describe('AdminArchive', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Archive this year' }))
     expect(post).toHaveBeenCalledWith('/api/admin/archive', { year: local.getFullYear(), heldOn: localDate })
     expect(onChange).toHaveBeenCalled()
+  })
+
+  it('asks to confirm the year and date, and sends nothing if declined', async () => {
+    vi.mocked(window.confirm).mockReturnValue(false)
+    render(<AdminArchive event={revealed} archivedYear={null} onChange={() => {}} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Archive this year' }))
+    expect(window.confirm).toHaveBeenCalledWith(`Archive as ${local.getFullYear()} (${localDate})? The year can't be changed later.`)
+    expect(post).not.toHaveBeenCalled()
   })
 
   it('shows the archived state with a history link and photo re-check', () => {

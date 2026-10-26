@@ -51,7 +51,8 @@ export function AdminArchive({
           className="mt-2 flex flex-wrap items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault()
-            run({ year, heldOn })
+            // a wrong year can only be fixed in SQL afterwards
+            if (confirm(`Archive as ${year} (${heldOn})? The year can't be changed later.`)) run({ year, heldOn })
           }}
         >
           <label className="flex flex-col">
