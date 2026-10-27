@@ -4,19 +4,22 @@ A yearly neighborhood chili cook-off: Cooks bring Chilis, Guests taste and vote,
 
 ## Language
 
+### Events
+
 **Event**:
-One year's cook-off, from Setup through the Reveal. There is at most one Event per year.
+One year's cook-off. There is at most one Event per year.
 _Avoid_: Edition, season
 
 **Past Event**:
-An Event whose Results are kept after the next Event begins.
+An Event that has been archived, so its Results are kept once the next Event starts.
 _Avoid_: Old event
 
 **Phase**:
 Where an Event stands: Setup, Voting or Revealed. Being archived is not a Phase.
+_Avoid_: Status
 
 **Setup**:
-The Phase before Voting, while Chilis are being added and the Event prepared.
+The Phase before Voting.
 
 **Voting**:
 The Phase between Setup and the Reveal.
@@ -30,7 +33,7 @@ The Phase after the Reveal.
 ### People
 
 **Guest**:
-Anyone attending an Event.
+Anyone at an Event, including Cooks and the Host.
 _Avoid_: Taster, attendee, user
 
 **Cook**:
@@ -43,13 +46,13 @@ _Avoid_: Admin, organizer
 
 **Voter**:
 One identity Ballots are counted under. A Guest voting on two phones is two Voters.
-_Avoid_: Taster, user
+_Avoid_: Device
 
 ### Chilis
 
 **Chili**:
 One pot of chili brought to an Event.
-_Avoid_: Entry
+_Avoid_: Entry (as a noun for a Chili)
 
 **Pot number**:
 The number on a Chili's table card that Guests use to find it. It is a label, not the Chili's identity.
@@ -59,10 +62,10 @@ _Avoid_: Chili number
 The window when Cooks can add Chilis. It may be open during Setup or Voting, never after the Reveal.
 
 **Tag**:
-A preset word a Guest attaches to a Chili, such as Spicy or Smoky.
-_Avoid_: Label, rating
+A preset word, such as Spicy or Smoky, that Guests put on a Chili during Voting.
+_Avoid_: Rating
 
-### Voting
+### Ballots
 
 **Ballot**:
 A Voter's ranked top three Chilis, one Pick each. A Voter has at most one Ballot per Event.
