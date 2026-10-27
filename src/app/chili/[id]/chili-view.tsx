@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { ChiliDetail } from "@/components/ChiliDetail";
 import { EventBand } from "@/components/EventBand";
 import { fetchChili } from "@/lib/chilis";
 import { useLive } from "@/lib/live";
-import { currentPhase, fetchEvent, offsetFrom } from "@/lib/event";
+import { useEventPhase } from "@/lib/phase";
 import { useRevealRedirect } from "@/lib/use-reveal-redirect";
 import { fetchAllergens, fetchTags } from "@/lib/reference";
 import { fetchTagCounts } from "@/lib/tags";
@@ -18,13 +17,8 @@ export function ChiliView() {
   const { data: allergens } = useLive([], fetchAllergens, 86_400_000);
   const { data: tags } = useLive([], fetchTags, 86_400_000);
   const { data: tagCounts, refresh } = useLive(["chili_tags"], fetchTagCounts);
-  const { data: event } = useLive(["event"], fetchEvent);
-  const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event]);
-  useRevealRedirect(event, offsetMs);
-  // Mirrors the server's voting_open(), which also requires reveal_at.
-  const tagsEnabled =
-    !!event?.revealAt &&
-    currentPhase(event, Date.parse(event.serverNow)) === "voting";
+  const { event, phase, votingOpen: tagsEnabled } = useEventPhase();
+  useRevealRedirect(phase);
   return (
     <>
       <EventBand size="compact">{event?.name}</EventBand>

@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { clearPending, isComplete, loadPending, savePending, setPick, type Picks } from '@/lib/ballot'
 import { fetchChilis } from '@/lib/chilis'
-import { currentPhase, fetchEvent, offsetFrom } from '@/lib/event'
 import { useLive } from '@/lib/live'
+import { useEventPhase } from '@/lib/phase'
 import { postJson } from '@/lib/post-json'
 import { useRevealRedirect } from '@/lib/use-reveal-redirect'
 import { actionBar, primaryBtn } from './buttons'
@@ -19,10 +19,9 @@ const EMPTY: Picks = [null, null, null]
 const RETRYABLE = new Set(['network', 'server_error', 'no_voter', 'bot'])
 
 export function Ballot() {
-  const { data: event } = useLive(['event'], fetchEvent)
+  const { event, offsetMs, phase, votingOpen } = useEventPhase()
   const { data: chilis } = useLive(['chilis'], fetchChilis)
-  const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event])
-  useRevealRedirect(event, offsetMs)
+  useRevealRedirect(phase)
   const [picks, setPicks] = useState<Picks>(EMPTY)
   const [hasBallot, setHasBallot] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
@@ -73,8 +72,7 @@ export function Ballot() {
     setSaving(false)
   }
 
-  const phase = event && currentPhase(event, Date.parse(event.serverNow))
-  const open = phase === 'voting' && !!event?.revealAt && !closed
+  const open = votingOpen && !closed
   const shell = 'mx-auto w-full max-w-md px-4'
   const band = <EventBand size="compact">{event?.name}</EventBand>
 

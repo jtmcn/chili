@@ -1,5 +1,5 @@
 import { browserClient } from '@/lib/supabase/browser'
-import type { EventState, Phase } from '@/lib/types'
+import type { EventState } from '@/lib/types'
 
 export async function fetchEvent(): Promise<EventState> {
   const { data, error } = await browserClient().rpc('get_event')
@@ -28,8 +28,4 @@ export function offsetFrom(e: EventState, receivedAt = Date.now()): number {
 
 export function serverNow(offsetMs: number, now = Date.now()): number {
   return now + offsetMs
-}
-
-export function currentPhase(e: EventState, nowMs: number): Phase {
-  return e.revealAt && nowMs >= Date.parse(e.revealAt) ? 'revealed' : e.status
 }
