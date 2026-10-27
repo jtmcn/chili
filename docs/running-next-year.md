@@ -12,7 +12,7 @@
 
 ## On the day
 
-- Merge nothing once cooks start adding chilis. In 2026 three deploys landed during entries and voting.
+- Merge nothing once cooks start adding chilis. In 2026 three deploys landed while entries were open and during voting.
 - From `/admin`: set the reveal time, open entries, print the QR code, and enter **Guests expected**. If ballots pass that number, the page warns you; close voting early if it looks like stuffing. Close entries once every pot is on the table.
 - Cooks fix their own chilis from the home screen (**Your chili → Edit**) until reveal; the host only deletes true duplicates, which leaves a gap in pot numbers.
 - Allergens are self-reported. In 2026, 4 of 5 chilis said "none", including a mole, so ask cooks about nuts, sesame and flour at check-in.

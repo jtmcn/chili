@@ -1,33 +1,31 @@
 # Chili Cook-Off
 
-A yearly neighborhood chili cook-off: cooks bring chilis, guests taste and vote, and the results are revealed at a set time.
+A yearly neighborhood chili cook-off: Cooks bring Chilis, Guests taste and vote, and the Results are revealed at a set time.
 
 ## Language
 
 **Event**:
-One year's cook-off, from setup through the reveal. There is at most one Event per year, and a year identifies it.
-_Avoid_: Edition, cook-off (for a single year), season
+One year's cook-off, from Setup through the Reveal. There is at most one Event per year.
+_Avoid_: Edition, season
 
 **Past Event**:
-An Event whose results have been archived to the history.
-_Avoid_: Archive, old event
+An Event whose Results are kept after the next Event begins.
+_Avoid_: Old event
 
 **Phase**:
 Where an Event stands: Setup, Voting or Revealed. Being archived is not a Phase.
-_Avoid_: Status, state, stage
 
 **Setup**:
-The Phase before Voting, when Cooks add Chilis and the host prepares the Event.
+The Phase before Voting, while Chilis are being added and the Event prepared.
 
 **Voting**:
-The Phase when Voters tag Chilis and submit Ballots. It ends at the Reveal.
+The Phase between Setup and the Reveal.
 
 **Reveal**:
-The moment Voting closes and the results become visible to everyone. Closing Voting early just moves the Reveal earlier.
-_Avoid_: Voting closed (as a separate moment)
+The single moment when Voting closes and the Results become visible to everyone.
 
 **Revealed**:
-The Phase after the Reveal, when the results are visible.
+The Phase after the Reveal.
 
 ### People
 
@@ -36,35 +34,47 @@ Anyone attending an Event.
 _Avoid_: Taster, attendee, user
 
 **Cook**:
-A Guest who added a Chili to the Event.
-_Avoid_: Entrant, chef, owner
+The person who brought a Chili.
+_Avoid_: Entrant, chef
+
+**Host**:
+The person who runs the Event.
+_Avoid_: Admin, organizer
 
 **Voter**:
-One browser holding a signed voter ID. A Guest who votes on two phones is two Voters.
-_Avoid_: Device, taster, user
+One identity Ballots are counted under. A Guest voting on two phones is two Voters.
+_Avoid_: Taster, user
 
 ### Chilis
 
 **Chili**:
-One pot of chili a Cook brings to an Event.
+One pot of chili brought to an Event.
+_Avoid_: Entry
 
 **Pot number**:
-The label on a Chili's table card that Guests use to find it. It is not the Chili's identity: the host can renumber pots, and numbers restart each Event.
-_Avoid_: Chili number, entry number
+The number on a Chili's table card that Guests use to find it. It is a label, not the Chili's identity.
+_Avoid_: Chili number
 
 **Entries open**:
-The window, set by the host, when Cooks can add Chilis. It is not tied to a phase.
-_Avoid_: Entry (as a noun for a Chili)
+The window when Cooks can add Chilis. It may be open during Setup or Voting, never after the Reveal.
+
+**Tag**:
+A preset word a Guest attaches to a Chili, such as Spicy or Smoky.
+_Avoid_: Label, rating
 
 ### Voting
 
 **Ballot**:
-One Voter's ranked 1st, 2nd and 3rd Picks of three different Chilis. A Voter has at most one Ballot per Event.
+A Voter's ranked top three Chilis, one Pick each. A Voter has at most one Ballot per Event.
 _Avoid_: Vote (as a noun)
 
 **Pick**:
-One Chili's place on a Ballot: 1st, 2nd or 3rd.
-_Avoid_: Vote, choice
+One Chili's place on a Ballot: 1st, 2nd or 3rd, worth 3, 2 or 1 points.
+_Avoid_: Choice
+
+**Results**:
+Every Chili ranked by its points from all Ballots.
+_Avoid_: Standings, scores
 
 **Ballot stuffing**:
 More Ballots than Guests at an Event.
