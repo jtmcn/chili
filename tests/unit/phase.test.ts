@@ -101,8 +101,10 @@ describe('useEventPhase', () => {
     await flush()
     state.event = ev(new Date(NOW + 60_000).toISOString())
     await act(async () => { state.refreshes.forEach((r) => r()) })
-    await act(async () => { await vi.advanceTimersByTimeAsync(3000) })
+    await act(async () => { await vi.advanceTimersByTimeAsync(59_999) })
     expect(result.current.phase).toBe('voting')
+    await act(async () => { await vi.advanceTimersByTimeAsync(1) })
+    expect(result.current.phase).toBe('revealed')
   })
 
   it('is revealed straight away when revealAt has passed', async () => {

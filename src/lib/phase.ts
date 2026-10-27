@@ -21,27 +21,28 @@ export function phaseOf(e: EventState, nowMs: number): EventPhase {
   return { phase, votingOpen: phase === 'voting' && revealAt !== null, entriesOpen: e.entriesOpen && !revealed }
 }
 
-type Loading = { phase: undefined; votingOpen: false; entriesOpen: false }
+export type LiveEventPhase = { offsetMs: number } & (
+  | ({ event: EventState } & EventPhase)
+  | { event: undefined; phase: undefined; votingOpen: false; entriesOpen: false }
+)
 
 // The live Event and its Phase, re-rendered at the Reveal (server time) without waiting for a poll.
-export function useEventPhase(): { event?: EventState; offsetMs: number } & (EventPhase | Loading) {
+export function useEventPhase(): LiveEventPhase {
   const { data: event } = useLive(['event'], fetchEvent)
   // Recomputed on each event poll; between polls the phone clock is trusted.
   const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event])
   const revealAt = event?.revealAt ?? null
-  // The revealAt whose timer has fired; keyed so a moved Reveal re-arms.
-  const [reached, setReached] = useState<string | null>(null)
+  // Server time the last Reveal timer fired at; always in the past, so safe to keep.
+  const [firedAt, setFiredAt] = useState(0)
   useEffect(() => {
     if (!revealAt) return
     const ms = Math.max(0, Date.parse(revealAt) - serverNow(offsetMs))
     // Past the limit setTimeout fires at once; a later poll re-arms it.
     if (ms > MAX_TIMEOUT) return
-    const t = setTimeout(() => setReached(revealAt), ms)
+    const t = setTimeout(() => setFiredAt(Date.parse(revealAt)), ms)
     return () => clearTimeout(t)
   }, [revealAt, offsetMs])
 
   if (!event) return { event, offsetMs, phase: undefined, votingOpen: false, entriesOpen: false }
-  const snapshot = Date.parse(event.serverNow)
-  const now = reached !== null && reached === revealAt ? Math.max(snapshot, Date.parse(reached)) : snapshot
-  return { event, offsetMs, ...phaseOf(event, now) }
+  return { event, offsetMs, ...phaseOf(event, Math.max(Date.parse(event.serverNow), firedAt)) }
 }
