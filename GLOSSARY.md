@@ -22,7 +22,7 @@ _Avoid_: Status
 The Phase before Voting.
 
 **Voting**:
-The Phase between Setup and the Reveal.
+The Phase between Setup and the Reveal. Ballots and Tags are accepted only while the Reveal time is set and still ahead.
 
 **Reveal**:
 The single moment when Voting closes and the Results become visible to everyone.

@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { currentPhase, fetchBallotCount, fetchEvent, offsetFrom, serverNow as serverNowMs } from '@/lib/event'
+import { fetchBallotCount } from '@/lib/event'
 import { fetchChilis } from '@/lib/chilis'
 import { useLive } from '@/lib/live'
+import { useEventPhase } from '@/lib/phase'
 import { fetchAllergens, fetchTags } from '@/lib/reference'
 import { fetchResults } from '@/lib/results'
 import { fetchTagCounts, topTags } from '@/lib/tags'
@@ -18,26 +19,13 @@ import type { RefItem, TagCount } from '@/lib/types'
 
 // Fetched client-side so `/` stays static and the build never calls Supabase.
 export function Home() {
-  const { data: event } = useLive(['event'], fetchEvent)
+  const { event, offsetMs, phase, votingOpen: voting, entriesOpen: canAdd } = useEventPhase()
   const { data: chilis } = useLive(['chilis'], fetchChilis)
   const { data: allergens } = useLive([], fetchAllergens, 86_400_000)
   const { data: tags } = useLive([], fetchTags, 86_400_000)
   const { data: tagCounts } = useLive(['chili_tags'], fetchTagCounts)
   const { data: ballots } = useLive(['ballots'], fetchBallotCount)
-  // Offset is recomputed on each event poll; between polls the countdown ignores phone-clock changes.
-  const offsetMs = useMemo(() => (event ? offsetFrom(event) : 0), [event])
-  const [nowMs, setNowMs] = useState<number>()
-  const revealAt = event?.revealAt
-  // Fires at revealAt (server time); re-armed when revealAt or the offset changes.
-  useEffect(() => {
-    if (!revealAt) return
-    const t = setTimeout(() => setNowMs(Date.now()), Math.max(0, Date.parse(revealAt) - serverNowMs(offsetMs)))
-    return () => clearTimeout(t)
-  }, [revealAt, offsetMs])
-  const phase = event ? currentPhase(event, nowMs === undefined ? Date.parse(event.serverNow) : serverNowMs(offsetMs, nowMs)) : undefined
   const revealed = phase === 'revealed'
-  const voting = !!event?.revealAt && phase === 'voting'
-  const canAdd = !!event?.entriesOpen && !revealed
   const big = 'mt-2.5 font-bold leading-[1.1] tracking-[-0.01em]'
   return (
     <>

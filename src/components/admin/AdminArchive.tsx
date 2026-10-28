@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { currentPhase } from '@/lib/event'
+import { phaseOf } from '@/lib/phase'
 import type { EventState } from '@/lib/types'
 import { useAdminPost } from './AdminGate'
 
@@ -30,7 +30,7 @@ export function AdminArchive({
   const [msg, setMsg] = useState('')
   const [pending, setPending] = useState(false)
 
-  if (currentPhase(event, Date.parse(event.serverNow)) !== 'revealed') return null
+  if (phaseOf(event, Date.parse(event.serverNow)).phase !== 'revealed') return null
 
   async function run(body: { year: number; heldOn: string }) {
     setPending(true)
