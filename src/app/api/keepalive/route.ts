@@ -11,6 +11,10 @@ export async function GET(req: Request): Promise<Response> {
   if (!timingSafeEqual(h(given), h(`Bearer ${secret}`))) return fail('unauthorized', 401)
 
   const { error } = await serverClient().rpc('get_event')
-  if (error) return fail('server_error', 500)
+  if (error) {
+    // nobody watches this route; the log is the only trace of a failed keep-alive
+    console.error('keepalive', error)
+    return fail('server_error', 500)
+  }
   return ok({})
 }

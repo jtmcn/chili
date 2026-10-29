@@ -18,5 +18,6 @@ describe('keepalive', () => {
   it('401 when CRON_SECRET is unset', async () => {
     delete process.env.CRON_SECRET
     expect((await get({ authorization: 'Bearer ' })).status).toBe(401)
+    expect((await get({ authorization: 'Bearer undefined' })).status).toBe(401)
   })
 })
