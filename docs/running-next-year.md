@@ -1,5 +1,13 @@
 # Running the cook-off again
 
+## Between events
+
+Supabase is on the free plan, which pauses a project after 7 idle days and only restores it from the dashboard for 90 days. A daily Vercel Cron hits `/api/keepalive` to prevent that. Nothing alerts if it fails, so every 2–3 months:
+
+- In Vercel, under **Settings → Cron Jobs**, check that recent runs returned 200. For a 500, the cause is in runtime logs under `keepalive`.
+- In Supabase, check that the project shows Active, not Paused.
+- `CRON_SECRET` must stay set in Vercel production. Changing it only takes effect after a redeploy.
+
 ## A week before
 
 1. Push migrations to prod: `npx supabase link --project-ref ivvzfqqkhftoyowanhck`, then `npx supabase db push`.
